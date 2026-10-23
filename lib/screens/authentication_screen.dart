@@ -1,11 +1,12 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:inkflow/screens/login_screen.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class AuthenticationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF1F4ED),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -39,7 +40,7 @@ class AuthenticationScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     SizedBox(height: 20), // Space between the texts
@@ -52,7 +53,7 @@ class AuthenticationScreen extends StatelessWidget {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.black54,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -77,7 +78,7 @@ class AuthenticationScreen extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       elevation: 5.0,
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Color(0xFFBE7066),
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart';
 
 class ContinueReadingWidget extends StatelessWidget {
@@ -24,7 +24,7 @@ class ContinueReadingWidget extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(10.0),
       decoration: BoxDecoration(
-        color: Color(0xFFEFC5C1),
+        color: AppColors.primaryContainer,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -65,7 +65,7 @@ class ContinueReadingWidget extends StatelessWidget {
                     'Page $currentPage of $totalPages',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.black54,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -79,7 +79,7 @@ class ContinueReadingWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
+                          color: AppColors.shadowMedium,
                           spreadRadius: 2,
                           blurRadius: 5,
                           offset: Offset(0, 3), // Shadow position
@@ -96,7 +96,7 @@ class ContinueReadingWidget extends StatelessWidget {
                                 height: 5,
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5),
-                                  color: Color(0xFFFFD5CA),
+                                  color: AppColors.primaryLight,
                                 ),
                               ),
                               FractionallySizedBox(
@@ -105,7 +105,7 @@ class ContinueReadingWidget extends StatelessWidget {
                                   height: 5,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(5),
-                                    color: Color(0xFFBE7066),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -119,7 +119,7 @@ class ContinueReadingWidget extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Color(0xFFBE7066),
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
@@ -138,7 +138,7 @@ class ContinueReadingWidget extends StatelessWidget {
                           'Continue Reading',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFFBE7066),
+                            color: AppColors.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

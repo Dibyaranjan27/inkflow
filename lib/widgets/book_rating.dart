@@ -1,4 +1,4 @@
-﻿import 'package:inkflow/constants.dart';
+import 'package:inkflow/constants.dart';
 import 'package:flutter/material.dart';
 
 class BookRating extends StatelessWidget {
@@ -13,13 +13,13 @@ class BookRating extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             offset: Offset(3, 7),
             blurRadius: 20,
-            color: Color(0xFD3D3D3).withOpacity(.5),
+            color: AppColors.shadowLight,
           ),
         ],
       ),

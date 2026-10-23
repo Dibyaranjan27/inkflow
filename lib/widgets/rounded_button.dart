@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class RoundedButton extends StatelessWidget {
   final String text;
@@ -29,13 +30,13 @@ class RoundedButton extends StatelessWidget {
           horizontal: horizontalPadding,
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(30),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
               offset: Offset(0, 15),
               blurRadius: 30,
-              color: Color(0xFF666666).withOpacity(.11),
+              color: AppColors.shadowLight,
             ),
           ],
         ),
@@ -44,6 +45,7 @@ class RoundedButton extends StatelessWidget {
           style: TextStyle(
             fontSize: fontSize,
             fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
       ),

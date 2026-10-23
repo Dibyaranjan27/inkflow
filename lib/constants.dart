@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
-const kBlackColor = Color(0xFF393939);
-const kLightBlackColor = Color(0xFF8F8F8F);
-const kIconColor = Color(0xFFF48A37);
-const kProgressIndicator = Color(0xFFBE7066);
-const kScaffoldDarkBackgroundColor = Color(0xFF121212);
-const kAppBarDarkColor = Color(0xFF1E1E1E);
-const kBottomNavBarDarkColor = Color(0xFF1E1E1E);
+// Re-export design system so consumers of constants.dart get AppColors, AppTextStyles, AppTheme
+export 'package:inkflow/theme/app_theme.dart';
 
-final kShadowColor = Color(0xFFD3D3D3).withOpacity(.84);
+/// Legacy color constants delegated to [AppColors] design tokens.
+/// Maintained for backwards compatibility across existing widgets and screens.
+/// Zero breaking changes: all identifiers retain exact types and visual values.
+const Color kBlackColor = AppColors.textPrimary;
+const Color kLightBlackColor = AppColors.textSecondary;
+const Color kIconColor = AppColors.accent;
+const Color kProgressIndicator = AppColors.primary;
+const Color kScaffoldDarkBackgroundColor = AppColors.backgroundDark;
+const Color kAppBarDarkColor = AppColors.surfaceDark;
+const Color kBottomNavBarDarkColor = AppColors.surfaceDark;
 
-const Color kScaffoldBackgroundColor = Color(0xFFF1F4ED);
-const Color kLogoColor = Color(0xFFf5c0b9);
-const Color kWaveColor = Color(0xFFB7B7B7);
-const Color kTrackColor = Color(0xFFE6E6E6);
+// Deprecated .withOpacity(.84) replaced with compile-time const 0xD6D3D3D3 ARGB hex via AppColors.shadow
+const Color kShadowColor = AppColors.shadow;
+
+const Color kScaffoldBackgroundColor = AppColors.background;
+const Color kLogoColor = AppColors.spinnerLogo;
+const Color kWaveColor = AppColors.spinnerWave;
+const Color kTrackColor = AppColors.spinnerTrack;
+
+// Application Configuration Constants
+const String kAppName = 'Inkflow';
+const String kGoogleBooksApiKey = 'AIzaSyDJN3_7ORDyMtHvDClxxAAQtsH2TlAlSxc';
+
+// Shared Preferences Storage Keys
+const String kPrefIsLoggedIn = 'isLoggedIn';
+const String kPrefIsFirstOpen = 'isFirstOpen';
+const String kPrefIsDarkMode = 'isDarkMode';
+const String kPrefEmail = 'email';
+const String kPrefUsername = 'username';

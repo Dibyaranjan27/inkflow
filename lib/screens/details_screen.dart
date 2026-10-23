@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:inkflow/screens/reading_screen.dart';
 import 'package:inkflow/widgets/chapter_card_widget.dart';
@@ -7,6 +7,7 @@ import 'package:inkflow/widgets/simplified_book_card.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:convert'; // Add this import for JSON encoding/decoding
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class DetailsScreen extends StatefulWidget {
   final Map<String, dynamic> myBook; // Updated to receive the book details
@@ -114,21 +115,21 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             child: BackdropFilter(
                               filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
                               child: Container(
-                                color: Colors.white.withOpacity(0),
+                                color: Colors.transparent,
                               ),
                             ),
                           ),
                           // Gradient overlay
                           Positioned.fill(
                             child: Container(
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    Colors.black.withOpacity(0.4),
+                                    Color(0x66000000),
                                     Colors.transparent,
-                                    Colors.white.withOpacity(0.4),
+                                    Color(0x66FFFFFF),
                                     Colors.white
                                   ],
                                   stops: [0.0, 0.5, 0.7, 1.0],
@@ -329,8 +330,8 @@ class _DetailsScreenState extends State<DetailsScreen> {
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
+                decoration: const BoxDecoration(
+                  color: Color(0xCCFFFFFF),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -353,7 +354,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
                     style: ElevatedButton.styleFrom(
                       minimumSize:
                           Size(double.infinity, 50), // Full width button
-                      backgroundColor: Color(0xFFBE7066), // Button color
+                      backgroundColor: AppColors.primary, // Button color
                     ),
                   ),
                 ),

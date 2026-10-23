@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:inkflow/screens/forgot_password_screen.dart';
 import 'package:inkflow/screens/home_screen.dart';
 import 'package:inkflow/screens/loading_screen.dart';
@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -57,14 +58,14 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Login failed: Incorrect username or password'),
-          backgroundColor: Color(0xFFBE7066),
+          backgroundColor: AppColors.primary,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('An error occurred: $e'),
-          backgroundColor: Color(0xFFBE7066),
+          backgroundColor: AppColors.primary,
         ),
       );
     }
@@ -97,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Google sign-in failed: $error'),
-          backgroundColor: Color(0xFFBE7066),
+          backgroundColor: AppColors.primary,
         ),
       );
     }
@@ -126,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Facebook sign-in failed: ${result.status}'),
-            backgroundColor: Color(0xFFBE7066),
+            backgroundColor: AppColors.primary,
           ),
         );
       }
@@ -134,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('An error occurred during Facebook sign-in: $error'),
-          backgroundColor: Color(0xFFBE7066),
+          backgroundColor: AppColors.primary,
         ),
       );
     }
@@ -143,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF1F4ED),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -158,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -167,18 +168,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _usernameController,
                   decoration: InputDecoration(
                     hintText: 'Email',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    prefixIcon: Icon(Icons.person, color: Colors.grey),
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                    prefixIcon: Icon(Icons.person, color: AppColors.textSecondary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: AppColors.primary, width: 2),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.surface,
                   ),
                 ),
                 SizedBox(height: 20),
@@ -187,8 +188,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                    prefixIcon: Icon(Icons.lock, color: AppColors.textSecondary),
                     suffixIcon: Padding(
                       padding: const EdgeInsets.only(right: 4.0),
                       child: IconButton(
@@ -196,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           _isPasswordVisible
                               ? Icons.visibility
                               : Icons.visibility_off,
-                          color: Colors.grey,
+                          color: AppColors.textSecondary,
                         ),
                         onPressed: () {
                           setState(() {
@@ -207,14 +208,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: AppColors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey),
+                      borderSide: BorderSide(color: AppColors.primary, width: 2),
                     ),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.surface,
                   ),
                 ),
                 Align(
@@ -229,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Forgot Password?',
                       style: TextStyle(
-                          color: Colors.black, fontWeight: FontWeight.bold),
+                          color: AppColors.textPrimary, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -243,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Color(0xFFBE7066),
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -264,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: <Widget>[
                       Expanded(
                         child: Divider(
-                          color: Colors.black26,
+                          color: AppColors.divider,
                           thickness: 1,
                         ),
                       ),
@@ -273,14 +274,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Text(
                           'or sign in with',
                           style: TextStyle(
-                            color: Colors.black,
+                            color: AppColors.textSecondary,
                             fontSize: 14,
                           ),
                         ),
                       ),
                       Expanded(
                         child: Divider(
-                          color: Colors.black26,
+                          color: AppColors.divider,
                           thickness: 1,
                         ),
                       ),
@@ -320,7 +321,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: <Widget>[
                     Text(
                       'Don\'t have an account?',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -332,7 +336,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Sign Up',
                         style: TextStyle(
-                          color: Color(0xFFBE7066),
+                          color: AppColors.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

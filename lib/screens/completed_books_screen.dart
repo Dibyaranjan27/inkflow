@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart';
@@ -67,11 +67,11 @@ class _CompletedBooksScreenState extends State<CompletedBooksScreen> {
                 // Title and Descriptive Text Card
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: AppColors.shadowMedium,
                         blurRadius: 4,
                         spreadRadius: 1,
                         offset: Offset(0, 3),
@@ -91,7 +91,7 @@ class _CompletedBooksScreenState extends State<CompletedBooksScreen> {
                               style: TextStyle(
                                 fontSize: 25, // Responsive font size
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: AppColors.textPrimary,
                               ),
                             ),
                             SizedBox(
@@ -102,7 +102,7 @@ class _CompletedBooksScreenState extends State<CompletedBooksScreen> {
                               style: TextStyle(
                                 fontSize: 16, // Responsive font size
                                 fontWeight: FontWeight.normal,
-                                color: Colors.black54,
+                                color: AppColors.textSecondary,
                               ),
                               textAlign: TextAlign.start,
                             ),
@@ -133,14 +133,14 @@ class _CompletedBooksScreenState extends State<CompletedBooksScreen> {
                   children: [
                     Expanded(
                       child: Divider(
-                        color: Colors.black26, // Line color
+                        color: AppColors.divider, // Line color
                         thickness: 1.5, // Line thickness
                         endIndent: 10, // Space at the end
                       ),
                     ),
                     CircleAvatar(
                       radius: 12, // Circle size
-                      backgroundColor: Colors.black26, // Circle color
+                      backgroundColor: AppColors.divider, // Circle color
                       child: Icon(
                         Icons.bookmark,
                         size: 16, // Icon size
@@ -149,7 +149,7 @@ class _CompletedBooksScreenState extends State<CompletedBooksScreen> {
                     ),
                     Expanded(
                       child: Divider(
-                        color: Colors.black26, // Line color
+                        color: AppColors.divider, // Line color
                         thickness: 1.5, // Line thickness
                         indent: 10, // Space at the beginning
                       ),
@@ -232,7 +232,7 @@ class _CompletedBooksScreenState extends State<CompletedBooksScreen> {
                             'You have no completed books yet.',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.black54,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ),

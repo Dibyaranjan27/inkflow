@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class ChapterCard extends StatelessWidget {
   final int chapterNumber;
@@ -25,9 +26,9 @@ class ChapterCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300), // Light grey border
+        border: Border.all(color: AppColors.border), // Standardized border
         borderRadius: BorderRadius.circular(12),
-        color: Colors.white, // Background color for card
+        color: AppColors.surface, // Background color for card
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,7 +57,7 @@ class ChapterCard extends StatelessWidget {
                       .shrinkWrap, // Reduces tap target size
                 ),
                 child: Icon(Icons.chevron_right,
-                    color: Colors.black54), // Customize the color as needed
+                    color: AppColors.textSecondary), // Customize the color as needed
               ),
             ],
           ),
@@ -67,7 +68,7 @@ class ChapterCard extends StatelessWidget {
             children: [
               Text(
                 '$currentPage out of $totalPages pages',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
               ),
               Text(
                 '$percentage%',
@@ -79,8 +80,8 @@ class ChapterCard extends StatelessWidget {
           // Progress Bar
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: Color(0xFFFFD5CA),
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFBE7066)),
+            backgroundColor: AppColors.primaryLight,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ],
       ),

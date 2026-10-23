@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 // Custom Info Box with top title and bottom content with a filled color
 class CustomInfoBox extends StatelessWidget {
@@ -19,11 +20,11 @@ class CustomInfoBox extends StatelessWidget {
       width: 120,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey),
-        color: Colors.white, // Set the fill color to match your theme
+        border: Border.all(color: AppColors.border),
+        color: AppColors.surface, // Set the fill color to match your theme
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: AppColors.shadowMedium,
             blurRadius: 5,
             spreadRadius: 2,
           ),
@@ -43,7 +44,7 @@ class CustomInfoBox extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: Colors.black),
+                      color: AppColors.textPrimary),
                 ),
               ],
             ),
@@ -61,7 +62,7 @@ class CustomInfoBox extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: Color(0xFFBE7066)), // Icon for content
+                Icon(icon, color: AppColors.primary), // Icon for content
                 SizedBox(width: 8),
                 Text(
                   content,

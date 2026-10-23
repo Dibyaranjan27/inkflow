@@ -1,4 +1,4 @@
-﻿import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart';
 import 'package:inkflow/screens/bookmark_screen.dart';
@@ -226,7 +226,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
                         height: 150,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                          color: Color(0xFFEFC5C1),
+                          color: AppColors.primaryContainer,
                           borderRadius: BorderRadius.circular(12),
                           image: DecorationImage(
                             image: CachedNetworkImageProvider(bookCover),

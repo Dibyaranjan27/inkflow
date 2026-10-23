@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart'; // Assuming you have constants defined here
@@ -239,13 +239,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         BorderRadius.circular(20.0), // Adds rounded corners
                     child: BottomNavigationBar(
                       backgroundColor:
-                          Colors.white, // White background for better contrast
+                          AppColors.surface, // Standardized surface background
                       currentIndex: _selectedIndex,
                       onTap: _onItemTapped,
                       selectedItemColor:
-                          Color(0xFFBE7066), // Color for selected item
+                          AppColors.primary, // Brand primary color
                       unselectedItemColor:
-                          Colors.black54, // Color for unselected items
+                          AppColors.textSecondary, // Standardized secondary text color
                       type: BottomNavigationBarType
                           .fixed, // Fixed type for smooth transitions
                       items: [
@@ -375,7 +375,7 @@ class _HomeContentState extends State<HomeContent> {
           Material(
             elevation: 5, // Adjust the elevation value as needed
             shadowColor:
-                Colors.grey.withOpacity(0.5), // Adjust shadow color and opacity
+                AppColors.shadowMedium, // Standardized shadow elevation
             borderRadius: BorderRadius.circular(12),
             child: TextField(
               onChanged: (value) {
@@ -384,9 +384,9 @@ class _HomeContentState extends State<HomeContent> {
               onSubmitted: (value) => _navigateToSearchResults(context),
               decoration: InputDecoration(
                 hintText: 'Search books...',
-                prefixIcon: Icon(Icons.search, color: Colors.grey),
+                prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -414,7 +414,7 @@ class _HomeContentState extends State<HomeContent> {
                 child: Text(
                   'View All',
                   style: TextStyle(
-                      color: Color(0xFFBE7066), fontWeight: FontWeight.bold),
+                      color: AppColors.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -482,7 +482,7 @@ class _HomeContentState extends State<HomeContent> {
                 child: Text(
                   'View All',
                   style: TextStyle(
-                      color: Color(0xFFBE7066), fontWeight: FontWeight.bold),
+                      color: AppColors.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -570,7 +570,7 @@ class _HomeContentState extends State<HomeContent> {
                 child: Text(
                   'View All',
                   style: TextStyle(
-                      color: Color(0xFFBE7066), fontWeight: FontWeight.bold),
+                      color: AppColors.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -636,7 +636,7 @@ class _HomeContentState extends State<HomeContent> {
                 child: Text(
                   'View All',
                   style: TextStyle(
-                      color: Color(0xFFBE7066), fontWeight: FontWeight.bold),
+                      color: AppColors.primary, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -649,7 +649,7 @@ class _HomeContentState extends State<HomeContent> {
               children: [
                 CategoryCard(
                   categoryName: 'Fiction',
-                  backgroundColor: Color(0xFFBE7066),
+                  backgroundColor: AppColors.categoryFiction,
                   press: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
@@ -659,7 +659,7 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 CategoryCard(
                   categoryName: 'Science',
-                  backgroundColor: Color(0xFFFFD5CA),
+                  backgroundColor: AppColors.categoryScience,
                   press: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
@@ -669,7 +669,7 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 CategoryCard(
                   categoryName: 'History',
-                  backgroundColor: Color(0xFF8D6E63),
+                  backgroundColor: AppColors.categoryHistory,
                   press: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {
@@ -679,7 +679,7 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 CategoryCard(
                   categoryName: 'Technology',
-                  backgroundColor: Color(0xFFD7CCC8),
+                  backgroundColor: AppColors.categoryTechnology,
                   press: () {
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) {

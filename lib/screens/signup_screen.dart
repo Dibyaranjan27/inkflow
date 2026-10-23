@@ -1,10 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:inkflow/screens/login_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -61,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       } finally {
@@ -73,7 +74,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Please fill all fields and ensure passwords match'),
-          backgroundColor: Color(0xFFBE7066),
+          backgroundColor: AppColors.primary,
         ),
       );
     }
@@ -140,7 +141,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Color(0xFFF1F4ED),
+        backgroundColor: AppColors.background,
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 38.0),
           child: SingleChildScrollView(
@@ -154,7 +155,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -164,7 +165,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _usernameController,
                   decoration: InputDecoration(
                     hintText: 'Username',
-                    prefixIcon: Icon(Icons.person, color: Colors.grey),
+                    prefixIcon: Icon(Icons.person, color: AppColors.textSecondary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -176,7 +177,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   controller: _emailController,
                   decoration: InputDecoration(
                     hintText: 'Email',
-                    prefixIcon: Icon(Icons.email, color: Colors.grey),
+                    prefixIcon: Icon(Icons.email, color: AppColors.textSecondary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -189,13 +190,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   obscureText: !_isPasswordVisible,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                    prefixIcon: Icon(Icons.lock, color: AppColors.textSecondary),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isPasswordVisible
                             ? Icons.visibility
                             : Icons.visibility_off,
-                        color: Colors.grey,
+                        color: AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -215,13 +216,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   obscureText: !_isConfirmPasswordVisible,
                   decoration: InputDecoration(
                     hintText: 'Confirm Password',
-                    prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                    prefixIcon: Icon(Icons.lock, color: AppColors.textSecondary),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _isConfirmPasswordVisible
                             ? Icons.visibility
                             : Icons.visibility_off,
-                        color: Colors.grey,
+                        color: AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() {
@@ -243,7 +244,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     onPressed: _isLoading ? null : _signUp,
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Color(0xFFBE7066),
+                      backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -264,7 +265,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     children: <Widget>[
                       Expanded(
                         child: Divider(
-                          color: Colors.black26,
+                          color: AppColors.divider,
                           thickness: 1,
                         ),
                       ),
@@ -272,12 +273,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
                           'or sign up with',
-                          style: TextStyle(color: Colors.black),
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
                       ),
                       Expanded(
                         child: Divider(
-                          color: Colors.black26,
+                          color: AppColors.divider,
                           thickness: 1,
                         ),
                       ),
@@ -313,7 +314,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Text('Already have an account?'),
+                    Text(
+                      'Already have an account?',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacement(
@@ -325,7 +329,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       },
                       child: Text(
                         'Sign In ',
-                        style: TextStyle(color: Color(0xFFBE7066)),
+                        style: TextStyle(color: AppColors.primary),
                       ),
                     ),
                   ],

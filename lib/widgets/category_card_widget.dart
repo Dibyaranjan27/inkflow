@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// Assuming your color constants are here
+import 'package:inkflow/theme/app_theme.dart';
 
 class CategoryCard extends StatelessWidget {
   final String categoryName;
@@ -23,9 +23,9 @@ class CategoryCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
+                color: AppColors.shadowMedium,
                 spreadRadius: 2,
                 blurRadius: 5,
                 offset: Offset(0, 3), // Shadow position

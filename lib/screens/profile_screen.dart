@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart';
@@ -70,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontSize: 24.0,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -198,9 +198,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildOptionCard(IconData icon, String title, VoidCallback onTap) {
     return Card(
       elevation: 0,
-      color: Colors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey, width: 1),
+        side: BorderSide(color: AppColors.border, width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
@@ -210,15 +210,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFFBE7066),
+              color: AppColors.primary,
             ),
             child: Icon(icon, color: Colors.white),
           ),
           title: Text(
             title,
-            style: TextStyle(color: Colors.black),
+            style: TextStyle(color: AppColors.textPrimary),
           ),
-          trailing: Icon(Icons.arrow_forward_ios, color: Colors.black),
+          trailing: Icon(Icons.arrow_forward_ios, color: AppColors.textPrimary),
           onTap: onTap,
         ),
       ),
@@ -228,9 +228,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildDarkModeToggle() {
     return Card(
       elevation: 0,
-      color: Colors.white,
+      color: AppColors.surface,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey, width: 1),
+        side: BorderSide(color: AppColors.border, width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
@@ -240,18 +240,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: EdgeInsets.all(8.0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFFBE7066),
+              color: AppColors.primary,
             ),
             child: Icon(Icons.dark_mode, color: Colors.white),
           ),
-          title: Text('Dark Mode', style: TextStyle(color: Colors.black)),
+          title: Text('Dark Mode', style: TextStyle(color: AppColors.textPrimary)),
           trailing: GestureDetector(
             onTap: _toggleDarkMode,
             child: Container(
               width: 50,
               height: 30,
               decoration: BoxDecoration(
-                color: _isDarkMode ? Color(0xFFBE7066) : Colors.grey,
+                color: _isDarkMode ? AppColors.primary : AppColors.border,
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Stack(

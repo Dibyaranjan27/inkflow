@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart';
 import 'package:inkflow/screens/details_screen.dart';
@@ -150,7 +150,7 @@ class _BookListingPageState extends State<BookListingPage> {
               ),
               child: Material(
                 elevation: 5,
-                shadowColor: Colors.grey.withOpacity(0.5),
+                shadowColor: AppColors.shadowMedium,
                 borderRadius: BorderRadius.circular(12),
                 child: TextField(
                   controller:
@@ -160,9 +160,9 @@ class _BookListingPageState extends State<BookListingPage> {
                   },
                   decoration: InputDecoration(
                     hintText: 'Search books...',
-                    prefixIcon: Icon(Icons.search, color: Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
