@@ -1,0 +1,88 @@
+# Miscellaneous & OS Metadata
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.DS_Store?
+._*
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+*.tmp
+*~
+
+# Teamwork & Agent Metadata (DO NOT COMMIT)
+.agents/
+**/.agents/
+.gemini/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Sensitive & Local Credentials
+.env
+.env.*
+*.env
+*.env.*
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+key.properties
+**/key.properties
+local.properties
+**/local.properties
+
+# Gradle & Build caches
+.gradle/
+**/.gradle/
+/captures/
+captures/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+/build/
+**/build/
+
+# Ephemeral & Platform build artifacts
+**/ephemeral/
+**/Flutter/ephemeral/
+**/Pods/
+**/.symlinks/
+**/DerivedData/
+GeneratedPluginRegistrant.java
+**/GeneratedPluginRegistrant.*
+
+# Symbolication & Obfuscation
+app.*.symbols
+app.*.map.json
+
+# Test & Coverage
+coverage/
+test/.test_coverage.dart
+
+# Android Studio build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
