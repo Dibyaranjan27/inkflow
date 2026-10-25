@@ -47,6 +47,7 @@ class AppColors {
 
   // Structural & Border Tokens
   static const Color border = Color(0xFFD0D5DD); // Input / Card Border Light
+  static const Color cardPlaceholder = Color(0xFFE0E0E0); // Card Placeholder Light
   static const Color borderDark = Color(0xFF424242); // Border Dark
   static const Color divider = Color(0x2E000000); // Light Divider (~18% black)
   static const Color dividerDark = Color(0x1FFFFFFF); // Dark Divider (~12% white)

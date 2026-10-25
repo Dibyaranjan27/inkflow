@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     tz.initializeTimeZones();
     _initializeNotifications();
     _requestNotificationPermission();
-    // _checkExactAlarmPermission();
+    _checkExactAlarmPermission();
   }
 
   void _onItemTapped(int index) {
@@ -338,20 +338,11 @@ class _HomeContentState extends State<HomeContent> {
           .fetchBooks("trending"); // Adjust query for "Trending"
       final newArrivalsData =
           await _bookService.fetchBooks('subject:general&orderBy=newest');
-      final fictionData = await _bookService.fetchBooks('subject:fiction');
-      final scienceData = await _bookService.fetchBooks('subject:science');
-      final historyData = await _bookService.fetchBooks('subject:history');
-      final technologyData =
-          await _bookService.fetchBooks('subject:technology');
 
       setState(() {
         _myBooks = myBooks;
         _trendingBooks = trendingBooks;
         _newArrivals = newArrivalsData;
-        _fictionBooks = fictionData;
-        _scienceBooks = scienceData;
-        _historyBooks = historyData;
-        _technologyBooks = technologyData;
       });
     } catch (e) {
       print("Error fetching books: $e");
