@@ -39,6 +39,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _continueAsGuest() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', true);
+    await prefs.setBool('isFirstOpen', false);
+    await prefs.setString('username', 'Guest Reader');
+    await prefs.setString('email', 'guest@inkflow.app');
+
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => LoadingScreen()),
+      (route) => false,
+    );
+  }
+
   Future<void> _signInWithEmailAndPassword(BuildContext context) async {
     try {
       await FirebaseAuth.instance
@@ -75,8 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final GoogleSignIn googleSignIn = GoogleSignIn();
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        // User cancelled the Google sign-in dialog
+        return;
+      }
       final GoogleSignInAuthentication googleAuth =
-          await googleUser!.authentication;
+          await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -256,7 +275,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _continueAsGuest,
+                    icon: const Icon(Icons.explore_outlined, color: AppColors.primary),
+                    label: const Text(
+                      'Explore as Guest',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: AppColors.primary, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.all(38.0),
                   child: Row(

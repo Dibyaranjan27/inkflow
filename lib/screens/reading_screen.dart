@@ -1,377 +1,753 @@
+import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:inkflow/constants.dart';
-import 'package:inkflow/screens/bookmark_screen.dart';
-import 'package:inkflow/screens/home_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart'; // For opening URLs
-import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'package:inkflow/models/book_content.dart';
+import 'package:inkflow/screens/bookmark_screen.dart';
+import 'package:inkflow/screens/home_screen.dart';
+import 'package:inkflow/services/gutendex_service.dart';
+import 'package:inkflow/services/reading_progress_service.dart';
+import 'package:inkflow/theme/app_theme.dart';
+
+/// Available visual reading themes
+enum ReaderThemeMode { light, sepia, dark }
+
+/// Palette specifications for each reader theme
+class ReaderThemeData {
+  final Color backgroundColor;
+  final Color textColor;
+  final Color secondaryTextColor;
+  final Color appBarColor;
+  final Color bottomBarColor;
+  final Color cardColor;
+  final Color accentColor;
+  final Color dividerColor;
+
+  const ReaderThemeData({
+    required this.backgroundColor,
+    required this.textColor,
+    required this.secondaryTextColor,
+    required this.appBarColor,
+    required this.bottomBarColor,
+    required this.cardColor,
+    required this.accentColor,
+    required this.dividerColor,
+  });
+
+  static const light = ReaderThemeData(
+    backgroundColor: Color(0xFFFBF9F5), // Warm parchment white
+    textColor: Color(0xFF2C2C2C),
+    secondaryTextColor: Color(0xFF757575),
+    appBarColor: Colors.white,
+    bottomBarColor: Colors.white,
+    cardColor: Color(0xFFF1F4ED),
+    accentColor: AppColors.primary,
+    dividerColor: Color(0xFFE0DCD3),
+  );
+
+  static const sepia = ReaderThemeData(
+    backgroundColor: Color(0xFFF4ECD8), // Classic book paper
+    textColor: Color(0xFF5B4636),
+    secondaryTextColor: Color(0xFF8D7B68),
+    appBarColor: Color(0xFFEFE5CD),
+    bottomBarColor: Color(0xFFEFE5CD),
+    cardColor: Color(0xFFFAF3E3),
+    accentColor: Color(0xFF8B5E3C),
+    dividerColor: Color(0xFFDCCFBA),
+  );
+
+  static const dark = ReaderThemeData(
+    backgroundColor: Color(0xFF141414), // Dark canvas
+    textColor: Color(0xFFE8E8E8),
+    secondaryTextColor: Color(0xFF9E9E9E),
+    appBarColor: Color(0xFF1E1E1E),
+    bottomBarColor: Color(0xFF1E1E1E),
+    cardColor: Color(0xFF242424),
+    accentColor: Color(0xFFFFD5CA),
+    dividerColor: Color(0xFF333333),
+  );
+}
 
 class ReadingScreen extends StatefulWidget {
-  final Map<String, dynamic> bookData; // Receive dynamic book data
+  final Map<String, dynamic> bookData;
 
-  ReadingScreen({required this.bookData}); // Constructor
+  const ReadingScreen({super.key, required this.bookData});
 
   @override
-  _ReadingScreenState createState() => _ReadingScreenState();
+  State<ReadingScreen> createState() => _ReadingScreenState();
 }
 
 class _ReadingScreenState extends State<ReadingScreen> {
-  String bookName = '';
-  String chapterName = '';
-  String chapterDescription = '';
-  List<String> bookContent = [];
-  String webReaderLink = '';
-  bool isLoading = true;
-  String bookCover = '';
-  int currentPage = 0;
-  String pages = '100';
-  bool isDarkMode = false; // Dark mode state
-  bool isChapterCompleted =
-      false; // Track chapter completion// User email from Shared Preferences
+  // Service instance
+  final GutendexService _gutendexService = GutendexService();
 
-  final List<String> storyContent = [
-    "Once upon a time in a small village, there lived a young girl named Ella. Ella loved to explore the enchanted forest that bordered her home. She would often spend hours wandering its winding paths, marveling at the tall trees, sparkling streams, and the symphony of chirping birds and rustling leaves. One day, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color. The vibrant hues danced in the sunlight, creating a breathtaking tapestry that captivated her senses. \n\nIn the center of the glade stood a magnificent tree with shimmering leaves that glistened like emeralds. Its branches stretched high into the sky, and its trunk was adorned with intricate carvings that seemed to tell ancient stories. As Ella approached the tree, she heard a soft voice calling her name. \"Ella, come closer!\" it beckoned. She was astonished to find a tiny fairy perched on one of the branches, her wings sparkling like diamonds.\n\nThe fairy introduced herself as Lila and explained that she was the guardian of the forest. Lila had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. However, she revealed that a dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice trembling with urgency. \"If he succeeds, the forest will wither and die.\"\n",
-    "Ella's heart raced at the thought of losing the beauty she cherished so dearly. Determined to help, she agreed to join Lila in protecting the magical flowers. Together, they devised a plan to outsmart the sorcerer. They spent the next few days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with an ethereal glow that would confuse any intruder.\n\nAs they trained, Lila shared tales of the forest's history, telling Ella about the magical creatures that inhabited it—gentle deer that could speak, wise owls that kept watch over the night, and playful sprites that danced among the stars. Ella felt a deep connection to the forest and its inhabitants, understanding that she was part of something much greater than herself.\n\nWhen the day of the confrontation arrived, Ella stood bravely beside Lila, ready to face the sorcerer. The sky darkened as ominous clouds gathered overhead, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. But Ella stood tall, her heart pounding with determination. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She whispered incantations Lila had taught her, making the flowers glow brighter and shimmer in the dim light.\n",
-    "Confused and scared, the sorcerer stumbled backward, glancing around in panic as illusions of fearsome creatures danced before his eyes. Believing he was outnumbered, he fled the glade, never to return. Ella and Lila cheered, their laughter echoing through the trees. The forest was safe once more.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery. With Lila by her side, they celebrated their victory, dancing among the blossoms. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella knew that magic existed, not just in the forest, but within her own heart as well. She visited Lila often, learning more about the secrets of the enchanted world. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. And whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.",
-    "Once upon a time in a small village, there lived a young girl named Ella. With her auburn hair tied in a loose braid and sparkling green eyes, Ella was known for her adventurous spirit. She loved to explore the enchanted forest that bordered her home, a place filled with wonders that stirred her imagination. Every day after school, she would escape into the woods, finding solace among the towering trees and the gentle murmur of the nearby stream. One sunny afternoon, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color, each petal glistening like jewels under the sun.\n\nIn the center of the glade stood a magnificent tree with shimmering leaves that sparkled like diamonds. Its branches were heavy with blossoms, and its gnarled roots seemed to tell stories of ancient times. As Ella approached the tree, she heard a soft voice calling her name, sweet and melodious. \"Ella, come closer!\" it beckoned. Curiosity piqued, she stepped forward and was astonished to find a tiny fairy perched on one of the branches, her wings glimmering with iridescent colors that changed with the light.\n\nThe fairy introduced herself as Lila, the guardian of the forest. With a twinkle in her eye, she explained that she had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. But trouble loomed on the horizon. A dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice tinged with urgency. \"If he succeeds, the forest will wither, and its magic will fade forever.\"\n\nElla's heart raced at the thought of losing the beauty she cherished so dearly. \"What can I do to help?\" she asked, determination flashing in her eyes. Lila smiled, grateful for Ella's bravery. Together, they devised a plan to outsmart the sorcerer. They spent days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with a light that could confuse any intruder.",
-    "As they trained, Lila shared tales of the forest's history. Ella learned about the mystical creatures that called the woods home—the gentle deer that could speak wisdom, wise owls that watched over the night skies, and mischievous sprites that played tricks on unsuspecting travelers. Ella felt a deep connection to the forest, understanding that she was part of something much greater than herself.\n\nOne day, while exploring a different part of the forest, Ella discovered an ancient stone archway covered in vines. Intrigued, she stepped through it and found herself in a realm filled with magical creatures. There were unicorns grazing in a meadow, and a river of sparkling water flowed nearby. In this enchanted place, she met a wise old tortoise named Orin, who possessed knowledge of the forest's deepest secrets. He told Ella that to truly protect the glade, she needed to harness the magic within herself. \"You must believe in your power, young one,\" Orin advised. \"The strength of your heart can create wonders.\"\n\nElla returned to Lila, invigorated by her encounter. Together, they continued their preparations, practicing spells and strategies to defend the glade. When the day of the confrontation arrived, the sky darkened with ominous clouds, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. Ella stood tall, her heart pounding with determination. Remembering Orin’s words, she whispered a spell that filled her with light. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She conjured illusions of fierce beasts and shimmering sprites that danced around him.",
-    "Confused and terrified, Malakar stumbled backward, glancing around in panic. His dark magic faltered as he struggled to comprehend the scene before him. Sensing victory, Ella and Lila combined their magic, their energies intertwining to form a protective barrier around the glade. \"The magic of friendship is stronger than any darkness!\" Ella declared, and with a final surge of power, they banished the sorcerer from the glade, his terrified screams fading into the distance.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery and heart. With Lila by her side, they celebrated their victory, dancing among the blossoms, laughter echoing through the trees. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella visited Lila often, learning more about the secrets of the enchanted world. They explored hidden paths, encountered friendly creatures, and shared stories by the glimmering streams. Ella discovered that true magic resided not just in spells and charms, but in the kindness and courage one carried in their heart. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. Whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.\n\nAnd so, the enchanted forest thrived, its beauty preserved for those who believed in the magic of nature and the power of the heart.",
-    "Once upon a time in a small village, there lived a young girl named Ella. Ella loved to explore the enchanted forest that bordered her home. She would often spend hours wandering its winding paths, marveling at the tall trees, sparkling streams, and the symphony of chirping birds and rustling leaves. One day, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color. The vibrant hues danced in the sunlight, creating a breathtaking tapestry that captivated her senses. \n\nIn the center of the glade stood a magnificent tree with shimmering leaves that glistened like emeralds. Its branches stretched high into the sky, and its trunk was adorned with intricate carvings that seemed to tell ancient stories. As Ella approached the tree, she heard a soft voice calling her name. \"Ella, come closer!\" it beckoned. She was astonished to find a tiny fairy perched on one of the branches, her wings sparkling like diamonds.\n\nThe fairy introduced herself as Lila and explained that she was the guardian of the forest. Lila had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. However, she revealed that a dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice trembling with urgency. \"If he succeeds, the forest will wither and die.\"\n",
-    "Ella's heart raced at the thought of losing the beauty she cherished so dearly. Determined to help, she agreed to join Lila in protecting the magical flowers. Together, they devised a plan to outsmart the sorcerer. They spent the next few days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with an ethereal glow that would confuse any intruder.\n\nAs they trained, Lila shared tales of the forest's history, telling Ella about the magical creatures that inhabited it—gentle deer that could speak, wise owls that kept watch over the night, and playful sprites that danced among the stars. Ella felt a deep connection to the forest and its inhabitants, understanding that she was part of something much greater than herself.\n\nWhen the day of the confrontation arrived, Ella stood bravely beside Lila, ready to face the sorcerer. The sky darkened as ominous clouds gathered overhead, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. But Ella stood tall, her heart pounding with determination. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She whispered incantations Lila had taught her, making the flowers glow brighter and shimmer in the dim light.\n",
-    "Confused and scared, the sorcerer stumbled backward, glancing around in panic as illusions of fearsome creatures danced before his eyes. Believing he was outnumbered, he fled the glade, never to return. Ella and Lila cheered, their laughter echoing through the trees. The forest was safe once more.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery. With Lila by her side, they celebrated their victory, dancing among the blossoms. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella knew that magic existed, not just in the forest, but within her own heart as well. She visited Lila often, learning more about the secrets of the enchanted world. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. And whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.",
-    "Once upon a time in a small village, there lived a young girl named Ella. With her auburn hair tied in a loose braid and sparkling green eyes, Ella was known for her adventurous spirit. She loved to explore the enchanted forest that bordered her home, a place filled with wonders that stirred her imagination. Every day after school, she would escape into the woods, finding solace among the towering trees and the gentle murmur of the nearby stream. One sunny afternoon, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color, each petal glistening like jewels under the sun.\n\nIn the center of the glade stood a magnificent tree with shimmering leaves that sparkled like diamonds. Its branches were heavy with blossoms, and its gnarled roots seemed to tell stories of ancient times. As Ella approached the tree, she heard a soft voice calling her name, sweet and melodious. \"Ella, come closer!\" it beckoned. Curiosity piqued, she stepped forward and was astonished to find a tiny fairy perched on one of the branches, her wings glimmering with iridescent colors that changed with the light.\n\nThe fairy introduced herself as Lila, the guardian of the forest. With a twinkle in her eye, she explained that she had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. But trouble loomed on the horizon. A dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice tinged with urgency. \"If he succeeds, the forest will wither, and its magic will fade forever.\"\n\nElla's heart raced at the thought of losing the beauty she cherished so dearly. \"What can I do to help?\" she asked, determination flashing in her eyes. Lila smiled, grateful for Ella's bravery. Together, they devised a plan to outsmart the sorcerer. They spent days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with a light that could confuse any intruder.",
-    "As they trained, Lila shared tales of the forest's history. Ella learned about the mystical creatures that called the woods home—the gentle deer that could speak wisdom, wise owls that watched over the night skies, and mischievous sprites that played tricks on unsuspecting travelers. Ella felt a deep connection to the forest, understanding that she was part of something much greater than herself.\n\nOne day, while exploring a different part of the forest, Ella discovered an ancient stone archway covered in vines. Intrigued, she stepped through it and found herself in a realm filled with magical creatures. There were unicorns grazing in a meadow, and a river of sparkling water flowed nearby. In this enchanted place, she met a wise old tortoise named Orin, who possessed knowledge of the forest's deepest secrets. He told Ella that to truly protect the glade, she needed to harness the magic within herself. \"You must believe in your power, young one,\" Orin advised. \"The strength of your heart can create wonders.\"\n\nElla returned to Lila, invigorated by her encounter. Together, they continued their preparations, practicing spells and strategies to defend the glade. When the day of the confrontation arrived, the sky darkened with ominous clouds, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. Ella stood tall, her heart pounding with determination. Remembering Orin’s words, she whispered a spell that filled her with light. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She conjured illusions of fierce beasts and shimmering sprites that danced around him.",
-    "Confused and terrified, Malakar stumbled backward, glancing around in panic. His dark magic faltered as he struggled to comprehend the scene before him. Sensing victory, Ella and Lila combined their magic, their energies intertwining to form a protective barrier around the glade. \"The magic of friendship is stronger than any darkness!\" Ella declared, and with a final surge of power, they banished the sorcerer from the glade, his terrified screams fading into the distance.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery and heart. With Lila by her side, they celebrated their victory, dancing among the blossoms, laughter echoing through the trees. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella visited Lila often, learning more about the secrets of the enchanted world. They explored hidden paths, encountered friendly creatures, and shared stories by the glimmering streams. Ella discovered that true magic resided not just in spells and charms, but in the kindness and courage one carried in their heart. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. Whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.\n\nAnd so, the enchanted forest thrived, its beauty preserved for those who believed in the magic of nature and the power of the heart.",
-    "Once upon a time in a small village, there lived a young girl named Ella. Ella loved to explore the enchanted forest that bordered her home. She would often spend hours wandering its winding paths, marveling at the tall trees, sparkling streams, and the symphony of chirping birds and rustling leaves. One day, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color. The vibrant hues danced in the sunlight, creating a breathtaking tapestry that captivated her senses. \n\nIn the center of the glade stood a magnificent tree with shimmering leaves that glistened like emeralds. Its branches stretched high into the sky, and its trunk was adorned with intricate carvings that seemed to tell ancient stories. As Ella approached the tree, she heard a soft voice calling her name. \"Ella, come closer!\" it beckoned. She was astonished to find a tiny fairy perched on one of the branches, her wings sparkling like diamonds.\n\nThe fairy introduced herself as Lila and explained that she was the guardian of the forest. Lila had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. However, she revealed that a dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice trembling with urgency. \"If he succeeds, the forest will wither and die.\"\n",
-    "Ella's heart raced at the thought of losing the beauty she cherished so dearly. Determined to help, she agreed to join Lila in protecting the magical flowers. Together, they devised a plan to outsmart the sorcerer. They spent the next few days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with an ethereal glow that would confuse any intruder.\n\nAs they trained, Lila shared tales of the forest's history, telling Ella about the magical creatures that inhabited it—gentle deer that could speak, wise owls that kept watch over the night, and playful sprites that danced among the stars. Ella felt a deep connection to the forest and its inhabitants, understanding that she was part of something much greater than herself.\n\nWhen the day of the confrontation arrived, Ella stood bravely beside Lila, ready to face the sorcerer. The sky darkened as ominous clouds gathered overhead, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. But Ella stood tall, her heart pounding with determination. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She whispered incantations Lila had taught her, making the flowers glow brighter and shimmer in the dim light.\n",
-    "Confused and scared, the sorcerer stumbled backward, glancing around in panic as illusions of fearsome creatures danced before his eyes. Believing he was outnumbered, he fled the glade, never to return. Ella and Lila cheered, their laughter echoing through the trees. The forest was safe once more.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery. With Lila by her side, they celebrated their victory, dancing among the blossoms. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella knew that magic existed, not just in the forest, but within her own heart as well. She visited Lila often, learning more about the secrets of the enchanted world. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. And whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.",
-    "Once upon a time in a small village, there lived a young girl named Ella. With her auburn hair tied in a loose braid and sparkling green eyes, Ella was known for her adventurous spirit. She loved to explore the enchanted forest that bordered her home, a place filled with wonders that stirred her imagination. Every day after school, she would escape into the woods, finding solace among the towering trees and the gentle murmur of the nearby stream. One sunny afternoon, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color, each petal glistening like jewels under the sun.\n\nIn the center of the glade stood a magnificent tree with shimmering leaves that sparkled like diamonds. Its branches were heavy with blossoms, and its gnarled roots seemed to tell stories of ancient times. As Ella approached the tree, she heard a soft voice calling her name, sweet and melodious. \"Ella, come closer!\" it beckoned. Curiosity piqued, she stepped forward and was astonished to find a tiny fairy perched on one of the branches, her wings glimmering with iridescent colors that changed with the light.\n\nThe fairy introduced herself as Lila, the guardian of the forest. With a twinkle in her eye, she explained that she had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. But trouble loomed on the horizon. A dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice tinged with urgency. \"If he succeeds, the forest will wither, and its magic will fade forever.\"\n\nElla's heart raced at the thought of losing the beauty she cherished so dearly. \"What can I do to help?\" she asked, determination flashing in her eyes. Lila smiled, grateful for Ella's bravery. Together, they devised a plan to outsmart the sorcerer. They spent days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with a light that could confuse any intruder.",
-    "As they trained, Lila shared tales of the forest's history. Ella learned about the mystical creatures that called the woods home—the gentle deer that could speak wisdom, wise owls that watched over the night skies, and mischievous sprites that played tricks on unsuspecting travelers. Ella felt a deep connection to the forest, understanding that she was part of something much greater than herself.\n\nOne day, while exploring a different part of the forest, Ella discovered an ancient stone archway covered in vines. Intrigued, she stepped through it and found herself in a realm filled with magical creatures. There were unicorns grazing in a meadow, and a river of sparkling water flowed nearby. In this enchanted place, she met a wise old tortoise named Orin, who possessed knowledge of the forest's deepest secrets. He told Ella that to truly protect the glade, she needed to harness the magic within herself. \"You must believe in your power, young one,\" Orin advised. \"The strength of your heart can create wonders.\"\n\nElla returned to Lila, invigorated by her encounter. Together, they continued their preparations, practicing spells and strategies to defend the glade. When the day of the confrontation arrived, the sky darkened with ominous clouds, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. Ella stood tall, her heart pounding with determination. Remembering Orin’s words, she whispered a spell that filled her with light. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She conjured illusions of fierce beasts and shimmering sprites that danced around him.",
-    "Confused and terrified, Malakar stumbled backward, glancing around in panic. His dark magic faltered as he struggled to comprehend the scene before him. Sensing victory, Ella and Lila combined their magic, their energies intertwining to form a protective barrier around the glade. \"The magic of friendship is stronger than any darkness!\" Ella declared, and with a final surge of power, they banished the sorcerer from the glade, his terrified screams fading into the distance.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery and heart. With Lila by her side, they celebrated their victory, dancing among the blossoms, laughter echoing through the trees. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella visited Lila often, learning more about the secrets of the enchanted world. They explored hidden paths, encountered friendly creatures, and shared stories by the glimmering streams. Ella discovered that true magic resided not just in spells and charms, but in the kindness and courage one carried in their heart. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. Whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.\n\nAnd so, the enchanted forest thrived, its beauty preserved for those who believed in the magic of nature and the power of the heart.",
-    "Once upon a time in a small village, there lived a young girl named Ella. Ella loved to explore the enchanted forest that bordered her home. She would often spend hours wandering its winding paths, marveling at the tall trees, sparkling streams, and the symphony of chirping birds and rustling leaves. One day, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color. The vibrant hues danced in the sunlight, creating a breathtaking tapestry that captivated her senses. \n\nIn the center of the glade stood a magnificent tree with shimmering leaves that glistened like emeralds. Its branches stretched high into the sky, and its trunk was adorned with intricate carvings that seemed to tell ancient stories. As Ella approached the tree, she heard a soft voice calling her name. \"Ella, come closer!\" it beckoned. She was astonished to find a tiny fairy perched on one of the branches, her wings sparkling like diamonds.\n\nThe fairy introduced herself as Lila and explained that she was the guardian of the forest. Lila had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. However, she revealed that a dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice trembling with urgency. \"If he succeeds, the forest will wither and die.\"\n",
-    "Ella's heart raced at the thought of losing the beauty she cherished so dearly. Determined to help, she agreed to join Lila in protecting the magical flowers. Together, they devised a plan to outsmart the sorcerer. They spent the next few days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with an ethereal glow that would confuse any intruder.\n\nAs they trained, Lila shared tales of the forest's history, telling Ella about the magical creatures that inhabited it—gentle deer that could speak, wise owls that kept watch over the night, and playful sprites that danced among the stars. Ella felt a deep connection to the forest and its inhabitants, understanding that she was part of something much greater than herself.\n\nWhen the day of the confrontation arrived, Ella stood bravely beside Lila, ready to face the sorcerer. The sky darkened as ominous clouds gathered overhead, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. But Ella stood tall, her heart pounding with determination. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She whispered incantations Lila had taught her, making the flowers glow brighter and shimmer in the dim light.\n",
-    "Confused and scared, the sorcerer stumbled backward, glancing around in panic as illusions of fearsome creatures danced before his eyes. Believing he was outnumbered, he fled the glade, never to return. Ella and Lila cheered, their laughter echoing through the trees. The forest was safe once more.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery. With Lila by her side, they celebrated their victory, dancing among the blossoms. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella knew that magic existed, not just in the forest, but within her own heart as well. She visited Lila often, learning more about the secrets of the enchanted world. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. And whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.",
-    "Once upon a time in a small village, there lived a young girl named Ella. With her auburn hair tied in a loose braid and sparkling green eyes, Ella was known for her adventurous spirit. She loved to explore the enchanted forest that bordered her home, a place filled with wonders that stirred her imagination. Every day after school, she would escape into the woods, finding solace among the towering trees and the gentle murmur of the nearby stream. One sunny afternoon, while wandering deeper into the woods than ever before, she stumbled upon a hidden glade filled with flowers of every color, each petal glistening like jewels under the sun.\n\nIn the center of the glade stood a magnificent tree with shimmering leaves that sparkled like diamonds. Its branches were heavy with blossoms, and its gnarled roots seemed to tell stories of ancient times. As Ella approached the tree, she heard a soft voice calling her name, sweet and melodious. \"Ella, come closer!\" it beckoned. Curiosity piqued, she stepped forward and was astonished to find a tiny fairy perched on one of the branches, her wings glimmering with iridescent colors that changed with the light.\n\nThe fairy introduced herself as Lila, the guardian of the forest. With a twinkle in her eye, she explained that she had watched over the glade for centuries, ensuring that the flowers remained safe and vibrant. But trouble loomed on the horizon. A dark sorcerer named Malakar had set his sights on the enchanted glade, seeking to steal the flowers' magic for himself. \"The flowers hold immense power,\" Lila explained, her voice tinged with urgency. \"If he succeeds, the forest will wither, and its magic will fade forever.\"\n\nElla's heart raced at the thought of losing the beauty she cherished so dearly. \"What can I do to help?\" she asked, determination flashing in her eyes. Lila smiled, grateful for Ella's bravery. Together, they devised a plan to outsmart the sorcerer. They spent days gathering supplies from the forest, collecting herbs and ingredients to create protective charms. Ella learned to weave enchantments into the flowers, making them shimmer with a light that could confuse any intruder.",
-    "As they trained, Lila shared tales of the forest's history. Ella learned about the mystical creatures that called the woods home—the gentle deer that could speak wisdom, wise owls that watched over the night skies, and mischievous sprites that played tricks on unsuspecting travelers. Ella felt a deep connection to the forest, understanding that she was part of something much greater than herself.\n\nOne day, while exploring a different part of the forest, Ella discovered an ancient stone archway covered in vines. Intrigued, she stepped through it and found herself in a realm filled with magical creatures. There were unicorns grazing in a meadow, and a river of sparkling water flowed nearby. In this enchanted place, she met a wise old tortoise named Orin, who possessed knowledge of the forest's deepest secrets. He told Ella that to truly protect the glade, she needed to harness the magic within herself. \"You must believe in your power, young one,\" Orin advised. \"The strength of your heart can create wonders.\"\n\nElla returned to Lila, invigorated by her encounter. Together, they continued their preparations, practicing spells and strategies to defend the glade. When the day of the confrontation arrived, the sky darkened with ominous clouds, mirroring the tension in the air. Ella felt a rush of fear, but she pushed it aside, focusing on the bond she had formed with Lila and the strength they shared.\n\nAs Malakar approached, his shadow loomed over the glade, and the flowers trembled in fear. \"You think you can stop me, little girl?\" he sneered, his voice echoing through the trees. Ella stood tall, her heart pounding with determination. Remembering Orin’s words, she whispered a spell that filled her with light. With courage in her heart, she used her cleverness and quick thinking to trick the sorcerer into believing he was surrounded by magical creatures. She conjured illusions of fierce beasts and shimmering sprites that danced around him.",
-    "Confused and terrified, Malakar stumbled backward, glancing around in panic. His dark magic faltered as he struggled to comprehend the scene before him. Sensing victory, Ella and Lila combined their magic, their energies intertwining to form a protective barrier around the glade. \"The magic of friendship is stronger than any darkness!\" Ella declared, and with a final surge of power, they banished the sorcerer from the glade, his terrified screams fading into the distance.\n\nAs the sun broke through the clouds, casting golden rays over the glade, Ella was hailed as a hero. The flowers bloomed more vibrantly than ever, each petal a testament to her bravery and heart. With Lila by her side, they celebrated their victory, dancing among the blossoms, laughter echoing through the trees. The forest flourished under Lila's protection, and Ella felt a sense of belonging that she had never experienced before.\n\nFrom that day on, Ella visited Lila often, learning more about the secrets of the enchanted world. They explored hidden paths, encountered friendly creatures, and shared stories by the glimmering streams. Ella discovered that true magic resided not just in spells and charms, but in the kindness and courage one carried in their heart. Together, they forged an unbreakable bond, vowing to protect the forest and its wonders for generations to come. Whenever Ella ventured into the woods, she carried the knowledge that true strength comes from friendship, courage, and the magic that lies within us all.\n\nAnd so, the enchanted forest thrived, its beauty preserved for those who believed in the magic of nature and the power of the heart."
-  ];
+  // Book & Content State
+  BookContent? _bookContent;
+  int _currentChapterIndex = 0;
+  int _currentPageInChapter = 0;
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  // Metadata extracted from bookData
+  String _bookTitle = '';
+  String _bookAuthors = '';
+  String _bookCover = '';
+  String _bookDescription = '';
+  String _webReaderLink = '';
+
+  // E-Reader Preferences
+  ReaderThemeMode _themeMode = ReaderThemeMode.light;
+  double _fontSize = 17.0;
+  bool _isBookmarked = false;
+
+  ReaderThemeData get _currentThemeData {
+    switch (_themeMode) {
+      case ReaderThemeMode.sepia:
+        return ReaderThemeData.sepia;
+      case ReaderThemeMode.dark:
+        return ReaderThemeData.dark;
+      case ReaderThemeMode.light:
+        return ReaderThemeData.light;
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-    loadUserEmail(); // Load user email from Shared Preferences
-    loadBookData();
-    _checkIfBookmarked(); // Load book data from the widget
+    _extractInitialMetadata();
+    _loadPreferences();
+    _loadBook();
+    _checkBookmarkStatus();
   }
 
-  Future<void> _checkIfBookmarked() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('email');
+  void _extractInitialMetadata() {
+    _bookTitle = (widget.bookData['title'] ?? 'Untitled Book').toString().trim();
+    _bookAuthors = (widget.bookData['authors'] ??
+            widget.bookData['author'] ??
+            'Unknown Author')
+        .toString()
+        .trim();
+    _bookCover = (widget.bookData['thumbnail'] ??
+            widget.bookData['coverUrl'] ??
+            widget.bookData['imageLinks']?['thumbnail'] ??
+            '')
+        .toString()
+        .trim();
+    _bookDescription =
+        (widget.bookData['description'] ?? 'No description available')
+            .toString()
+            .trim();
+    _webReaderLink = (widget.bookData['webReaderLink'] ??
+            widget.bookData['previewLink'] ??
+            '')
+        .toString()
+        .trim();
+  }
 
-    // Create a unique key for the user
-    String key = '${username}_completedBooks';
-    List<String> bookmarkedBooks = prefs.getStringList(key) ?? [];
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTheme = prefs.getString('reader_theme') ?? 'light';
+    final savedSize = prefs.getDouble('reader_font_size') ?? 17.0;
 
+    if (!mounted) return;
     setState(() {
-      isChapterCompleted =
-          bookmarkedBooks.contains(json.encode(widget.bookData));
+      if (savedTheme == 'sepia') {
+        _themeMode = ReaderThemeMode.sepia;
+      } else if (savedTheme == 'dark') {
+        _themeMode = ReaderThemeMode.dark;
+      } else {
+        _themeMode = ReaderThemeMode.light;
+      }
+      _fontSize = savedSize.clamp(14.0, 26.0);
     });
+  }
+
+  Future<void> _saveThemePreference(ReaderThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('reader_theme', mode.name);
+  }
+
+  Future<void> _saveFontSizePreference(double size) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('reader_font_size', size);
+  }
+
+  Future<void> _checkBookmarkStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('email') ?? 'guest';
+    final key = '${username}_bookmarkedBooks';
+    final bookmarkedList = prefs.getStringList(key) ?? [];
+
+    final bookId = _getBookIdentifier();
+    final isMarked = bookmarkedList.any((item) {
+      try {
+        final decoded = json.decode(item) as Map<String, dynamic>;
+        final id = (decoded['id'] ?? decoded['bookId'] ?? decoded['title'])?.toString();
+        return id == bookId;
+      } catch (_) {
+        return false;
+      }
+    });
+
+    if (mounted) {
+      setState(() => _isBookmarked = isMarked);
+    }
+  }
+
+  String _getBookIdentifier() {
+    return (widget.bookData['id'] ??
+            widget.bookData['gutenbergId'] ??
+            widget.bookData['bookId'] ??
+            _bookTitle)
+        .toString();
   }
 
   Future<void> _toggleBookmark() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('email');
-    String key = '${username}_completedBooks';
-    List<String> bookmarkedBooks = prefs.getStringList(key) ?? [];
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('email') ?? 'guest';
+    final key = '${username}_bookmarkedBooks';
+    final bookmarkedList = prefs.getStringList(key) ?? [];
 
-    if (isChapterCompleted) {
-      bookmarkedBooks.remove(json.encode(widget.bookData));
-    } else {
-      bookmarkedBooks.add(json.encode(widget.bookData));
-    }
+    final bookId = _getBookIdentifier();
+    final cleanBookMap = {
+      'id': bookId,
+      'title': _bookTitle,
+      'authors': _bookAuthors,
+      'thumbnail': _bookCover,
+      'webReaderLink': _webReaderLink,
+      'description': _bookDescription,
+    };
 
-    await prefs.setStringList(key, bookmarkedBooks);
+    final encoded = json.encode(cleanBookMap);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(isChapterCompleted
-              ? 'Chapter marked as incomplete!'
-              : 'Chapter marked as completed!')),
-    );
-
-    setState(() {
-      isChapterCompleted = !isChapterCompleted; // Toggle the state
-    });
-  }
-
-  Future<void> loadUserEmail() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    // Retrieve user email
-    isDarkMode = prefs.getBool('isDarkMode') ?? false; // Load dark mode state
-
-    // Load chapter completion status from Shared Preferences
-  }
-
-  void goToNextPage() {
-    if (currentPage < storyContent.length - 1) {
-      setState(() {
-        currentPage++;
+    if (_isBookmarked) {
+      bookmarkedList.removeWhere((item) {
+        try {
+          final decoded = json.decode(item) as Map<String, dynamic>;
+          final id = (decoded['id'] ?? decoded['bookId'] ?? decoded['title'])?.toString();
+          return id == bookId;
+        } catch (_) {
+          return false;
+        }
       });
-    }
-  }
-
-  void goToPreviousPage() {
-    if (currentPage > 0) {
-      setState(() {
-        currentPage--;
-      });
-    }
-  }
-
-  void loadBookData() {
-    setState(() {
-      bookName = widget.bookData['title'] ?? 'Unknown';
-      chapterName = "Introduction"; // Adjust as necessary
-      chapterDescription =
-          widget.bookData['description'] ?? 'No description available';
-      bookContent = []; // Use actual content if available
-      webReaderLink = widget.bookData['webReaderLink'] ?? '';
-      isLoading = false;
-      pages = widget.bookData['pageCount']?.toString() ?? 'N/A';
-      bookCover = widget.bookData['thumbnail'] ??
-          widget.bookData['imageLinks']?['thumbnail'] ??
-          'assets/images/default_thumbnail.png';
-    });
-  }
-
-  Future<void> openWebReader() async {
-    final uri = Uri.tryParse(webReaderLink);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri); // Open in browser
-    } else {
+      await prefs.setStringList(key, bookmarkedList);
+      if (!mounted) return;
+      setState(() => _isBookmarked = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Web Reader Unavailable')),
+        const SnackBar(content: Text('Removed from bookmarks')),
+      );
+    } else {
+      bookmarkedList.add(encoded);
+      await prefs.setStringList(key, bookmarkedList);
+      if (!mounted) return;
+      setState(() => _isBookmarked = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved to bookmarks')),
       );
     }
   }
 
-  Future<void> toggleDarkMode() async {
+  Future<void> _loadBook() async {
     setState(() {
-      isDarkMode = !isDarkMode; // Toggle the dark mode state
+      _isLoading = true;
+      _errorMessage = null;
     });
 
-    // Save the dark mode state in Shared Preferences
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', isDarkMode);
+    try {
+      final dynamic rawGutenbergId =
+          widget.bookData['gutenbergId'] ?? widget.bookData['id'];
+      final textUrl = widget.bookData['textUrl']?.toString();
+
+      int? gutenbergId;
+      if (rawGutenbergId is int) {
+        gutenbergId = rawGutenbergId;
+      } else if (rawGutenbergId is String) {
+        gutenbergId = int.tryParse(rawGutenbergId);
+      }
+
+      BookContent? content;
+
+      // Strategy 1: Explicit Gutenberg ID or text URL
+      if (gutenbergId != null && gutenbergId > 0) {
+        content = await _gutendexService.fetchBookContent(
+          gutenbergId: gutenbergId,
+          textUrl: textUrl,
+          title: _bookTitle,
+          author: _bookAuthors,
+          coverUrl: _bookCover.isNotEmpty ? _bookCover : null,
+        );
+      }
+      // Strategy 2: If title is present without Gutenberg ID, query Gutendex search
+      else if (_bookTitle.isNotEmpty) {
+        content = await _gutendexService.findAndFetchByTitle(
+          _bookTitle,
+          author: _bookAuthors,
+        );
+      }
+
+      if (!mounted) return;
+
+      if (content != null && content.chapters.isNotEmpty) {
+        int restoredChapter = 0;
+        int restoredPage = 0;
+
+        if (widget.bookData['chapterIndex'] is int) {
+          restoredChapter = (widget.bookData['chapterIndex'] as int)
+              .clamp(0, content.chapters.length - 1);
+        }
+        if (widget.bookData['currentPageInChapter'] is int) {
+          restoredPage = (widget.bookData['currentPageInChapter'] as int)
+              .clamp(0, content.chapters[restoredChapter].pageCount - 1);
+        }
+
+        setState(() {
+          _bookContent = content;
+          _currentChapterIndex = restoredChapter;
+          _currentPageInChapter = restoredPage;
+          _isLoading = false;
+        });
+        _saveProgress();
+      } else if (_webReaderLink.isNotEmpty) {
+        // Strategy 3: Modern in-copyright volume with Google Books Web Reader
+        setState(() {
+          _bookContent = null;
+          _isLoading = false;
+        });
+      } else {
+        // Strategy 4: Neither Gutenberg classic nor WebReader
+        setState(() {
+          _bookContent = null;
+          _isLoading = false;
+          _errorMessage = _bookTitle.isEmpty
+              ? 'No book selected'
+              : 'Full text is not available in the public domain for "$_bookTitle".';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'Failed to load reading content: $e';
+      });
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        backgroundColor: isDarkMode ? Colors.black : kScaffoldBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: isDarkMode ? Colors.white : Colors.black,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          title: Center(
-            child: isLoading
-                ? CircularProgressIndicator() // Show loading indicator
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(bookName,
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white : Colors.black)),
-                      Text('Chapter 1: $chapterName',
-                          style: TextStyle(
-                              fontSize: 14,
-                              color:
-                                  isDarkMode ? Colors.white70 : Colors.grey)),
-                    ],
-                  ),
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.dark_mode,
-                  color: isDarkMode ? Colors.white : Colors.black),
-              onPressed: toggleDarkMode, // Toggle dark mode on press
-            ),
-          ],
-        ),
-        body: isLoading
-            ? Center(
-                child:
-                    CircularProgressIndicator()) // Show loading while fetching
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  void _saveProgress() {
+    if (_bookContent == null || _bookContent!.chapters.isEmpty) return;
+
+    final overallPage = _bookContent!.calculateOverallPage(
+      _currentChapterIndex,
+      _currentPageInChapter,
+    );
+    final totalPages = _bookContent!.totalPages;
+    final currentChapter = _bookContent!.chapters[_currentChapterIndex];
+
+    ReadingProgressService.saveProgress(
+      bookId: _getBookIdentifier(),
+      bookTitle: _bookTitle,
+      bookCover: _bookCover,
+      authors: _bookAuthors,
+      currentPage: overallPage,
+      totalPages: totalPages,
+      bookData: widget.bookData,
+    );
+
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('last_read_book_id', _getBookIdentifier());
+      prefs.setString('last_read_book_title', _bookTitle);
+      prefs.setString('last_read_book_authors', _bookAuthors);
+      prefs.setString('last_read_book_cover', _bookCover);
+      prefs.setInt('last_read_current_page', overallPage);
+      prefs.setInt('last_read_total_pages', totalPages);
+      prefs.setInt('last_read_chapter_index', _currentChapterIndex);
+      prefs.setString('last_read_chapter_title', currentChapter.title);
+      prefs.setInt('last_read_page_in_chapter', _currentPageInChapter);
+      prefs.setString('last_read_timestamp', DateTime.now().toIso8601String());
+    });
+  }
+
+  void _goToNextPage() {
+    if (_bookContent == null) return;
+    final chapter = _bookContent!.chapters[_currentChapterIndex];
+
+    if (_currentPageInChapter < chapter.pageCount - 1) {
+      setState(() => _currentPageInChapter++);
+      _saveProgress();
+    } else if (_currentChapterIndex < _bookContent!.chapters.length - 1) {
+      setState(() {
+        _currentChapterIndex++;
+        _currentPageInChapter = 0;
+      });
+      _saveProgress();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("You've reached the end of the book!")),
+      );
+    }
+  }
+
+  void _goToPreviousPage() {
+    if (_bookContent == null) return;
+
+    if (_currentPageInChapter > 0) {
+      setState(() => _currentPageInChapter--);
+      _saveProgress();
+    } else if (_currentChapterIndex > 0) {
+      setState(() {
+        _currentChapterIndex--;
+        _currentPageInChapter =
+            _bookContent!.chapters[_currentChapterIndex].pageCount - 1;
+      });
+      _saveProgress();
+    }
+  }
+
+  void _navigateToChapter(int index) {
+    if (_bookContent == null || index < 0 || index >= _bookContent!.chapters.length) {
+      return;
+    }
+    setState(() {
+      _currentChapterIndex = index;
+      _currentPageInChapter = 0;
+    });
+    _saveProgress();
+  }
+
+  Future<void> _openWebReader() async {
+    if (_webReaderLink.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Web Reader link is unavailable')),
+      );
+      return;
+    }
+
+    final uri = Uri.tryParse(_webReaderLink);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.inAppBrowserView, // In-App Custom Tabs
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to open Google Books Web Reader')),
+      );
+    }
+  }
+
+  void _showTableOfContents() {
+    if (_bookContent == null || _bookContent!.chapters.isEmpty) return;
+    final themeData = _currentThemeData;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: themeData.appBarColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 16, 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Cover Card
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Container(
-                        height: 150,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer,
-                          borderRadius: BorderRadius.circular(12),
-                          image: DecorationImage(
-                            image: CachedNetworkImageProvider(bookCover),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Divider and Bookmark Icon
-                    _buildDividerWithIcon(),
-                    SizedBox(height: 16),
-                    // Chapter Description
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        chapterDescription,
-                        style: TextStyle(
-                            fontSize: 16,
-                            color:
-                                isDarkMode ? Colors.white70 : Colors.black87),
-                      ),
-                    ),
-                    // Another Divider
-                    _buildDividerWithIcon(),
-                    SizedBox(height: 16),
-                    // Book Content
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        storyContent[currentPage], // Simulate repeated content
-                        style: TextStyle(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Table of Contents',
+                          style: TextStyle(
                             fontSize: 18,
-                            color: isDarkMode ? Colors.white : Colors.black),
-                      ),
-                    ),
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: ElevatedButton(
-                          onPressed:
-                              webReaderLink.isNotEmpty ? openWebReader : null,
-                          child: Text(
-                            webReaderLink.isNotEmpty
-                                ? 'Read in Web Reader'
-                                : 'Web Reader Unavailable',
+                            fontWeight: FontWeight.bold,
+                            color: themeData.textColor,
                           ),
                         ),
-                      ),
+                        Text(
+                          '${_bookContent!.chapters.length} Chapters',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: themeData.secondaryTextColor,
+                          ),
+                        ),
+                      ],
                     ),
-                    // Divider before completion
-                    _buildDividerWithIcon(),
-                    SizedBox(height: 16),
-                    // Completion Prompt
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        'Tap the check icon to mark this chapter as completed.',
-                        style: TextStyle(
-                            fontSize: 16,
-                            color:
-                                isDarkMode ? Colors.white70 : Colors.black87),
-                      ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: themeData.textColor),
+                      onPressed: () => Navigator.pop(ctx),
                     ),
-                    // Web Reader Button or Unavailable Message
-                    _buildDividerWithIcon(),
                   ],
                 ),
               ),
-        // Bottom Bar
-        bottomNavigationBar: BottomAppBar(
-          color: isDarkMode ? Colors.black : Colors.white,
-          child: Container(
-            height: 60,
-            child: Row(
-              children: [
-                // Left Container (Home, Bookmark, Favorite)
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.home,
-                            color: isDarkMode ? Colors.white : Colors.black),
-                        onPressed: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return HomeScreen();
-                          }));
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.bookmark,
-                            color: isDarkMode ? Colors.white : Colors.black),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  BookmarkScreen(fromReadingScreen: true),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          isChapterCompleted
-                              ? FontAwesomeIcons.circleCheck // Filled icon
-                              : FontAwesomeIcons.circle,
-                          size: 20,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
-                        onPressed: () {
-                          _toggleBookmark();
-                        }, // Mark chapter as complete
-                      ),
-                    ],
+              Divider(height: 1, color: themeData.dividerColor),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _bookContent!.chapters.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    color: themeData.dividerColor,
+                    indent: 20,
+                    endIndent: 20,
                   ),
-                ),
-                VerticalDivider(
-                    color: isDarkMode ? Colors.white54 : Colors.grey),
-                IconButton(
-                  icon: Icon(Icons.arrow_back,
-                      color: isDarkMode ? Colors.white : Colors.black),
-                  onPressed: goToPreviousPage,
-                ),
-                // Right Container (Page Number, Forward Arrow)
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Text(
-                        'Pg ${currentPage + 1} of $pages',
-                        style: TextStyle(
-                            fontSize: 16,
+                  itemBuilder: (context, index) {
+                    final chapter = _bookContent!.chapters[index];
+                    final isCurrent = index == _currentChapterIndex;
+                    return ListTile(
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                      leading: CircleAvatar(
+                        radius: 14,
+                        backgroundColor: isCurrent
+                            ? themeData.accentColor
+                            : themeData.cardColor,
+                        child: Text(
+                          '${index + 1}',
+                          style: TextStyle(
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black),
+                            color: isCurrent
+                                ? Colors.white
+                                : themeData.textColor,
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        icon: Icon(Icons.arrow_forward,
-                            color: isDarkMode ? Colors.white : Colors.black),
-                        onPressed: goToNextPage,
+                      title: Text(
+                        chapter.title,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight:
+                              isCurrent ? FontWeight.bold : FontWeight.normal,
+                          color: isCurrent
+                              ? themeData.accentColor
+                              : themeData.textColor,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
+                      subtitle: Text(
+                        '${chapter.pageCount} ${chapter.pageCount == 1 ? "page" : "pages"}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: themeData.secondaryTextColor,
+                        ),
+                      ),
+                      trailing: isCurrent
+                          ? Icon(Icons.check_circle,
+                              color: themeData.accentColor, size: 20)
+                          : null,
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _navigateToChapter(index);
+                      },
+                    );
+                  },
                 ),
-              ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAppearanceSettings() {
+    final themeData = _currentThemeData;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: themeData.appBarColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 22.0, vertical: 20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Reading Appearance',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: themeData.textColor,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: themeData.textColor),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Theme',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: themeData.secondaryTextColor,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        _buildThemePill(
+                          label: 'Light',
+                          bg: const Color(0xFFFBF9F5),
+                          text: const Color(0xFF2C2C2C),
+                          isSelected: _themeMode == ReaderThemeMode.light,
+                          onSelect: () {
+                            setState(() => _themeMode = ReaderThemeMode.light);
+                            _saveThemePreference(ReaderThemeMode.light);
+                            setModalState(() {});
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                        _buildThemePill(
+                          label: 'Sepia',
+                          bg: const Color(0xFFF4ECD8),
+                          text: const Color(0xFF5B4636),
+                          isSelected: _themeMode == ReaderThemeMode.sepia,
+                          onSelect: () {
+                            setState(() => _themeMode = ReaderThemeMode.sepia);
+                            _saveThemePreference(ReaderThemeMode.sepia);
+                            setModalState(() {});
+                          },
+                        ),
+                        const SizedBox(width: 12),
+                        _buildThemePill(
+                          label: 'Dark',
+                          bg: const Color(0xFF1E1E1E),
+                          text: const Color(0xFFE8E8E8),
+                          isSelected: _themeMode == ReaderThemeMode.dark,
+                          onSelect: () {
+                            setState(() => _themeMode = ReaderThemeMode.dark);
+                            _saveThemePreference(ReaderThemeMode.dark);
+                            setModalState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Text Size',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: themeData.secondaryTextColor,
+                          ),
+                        ),
+                        Text(
+                          '${_fontSize.toInt()} sp',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: themeData.textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.text_fields, size: 18),
+                          color: themeData.textColor,
+                          onPressed: _fontSize > 14.0
+                              ? () {
+                                  final newSize = (_fontSize - 1.5).clamp(14.0, 26.0);
+                                  setState(() => _fontSize = newSize);
+                                  _saveFontSizePreference(newSize);
+                                  setModalState(() {});
+                                }
+                              : null,
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: _fontSize,
+                            min: 14.0,
+                            max: 26.0,
+                            divisions: 8,
+                            activeColor: themeData.accentColor,
+                            inactiveColor: themeData.dividerColor,
+                            onChanged: (val) {
+                              setState(() => _fontSize = val);
+                              _saveFontSizePreference(val);
+                              setModalState(() {});
+                            },
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.text_fields, size: 26),
+                          color: themeData.textColor,
+                          onPressed: _fontSize < 26.0
+                              ? () {
+                                  final newSize = (_fontSize + 1.5).clamp(14.0, 26.0);
+                                  setState(() => _fontSize = newSize);
+                                  _saveFontSizePreference(newSize);
+                                  setModalState(() {});
+                                }
+                              : null,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildThemePill({
+    required String label,
+    required Color bg,
+    required Color text,
+    required bool isSelected,
+    required VoidCallback onSelect,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onSelect,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected ? AppColors.primary : Colors.grey.shade400,
+              width: isSelected ? 2.5 : 1.0,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: text,
             ),
           ),
         ),
@@ -379,36 +755,361 @@ class _ReadingScreenState extends State<ReadingScreen> {
     );
   }
 
-  // Method to create Divider with Circle Avatar in the middle
-  Widget _buildDividerWithIcon() {
-    return Padding(
-      padding: const EdgeInsets.all(18.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: Divider(
-              color: isDarkMode ? Colors.white54 : Colors.grey,
-              thickness: 1.5,
-              endIndent: 10,
+  @override
+  Widget build(BuildContext context) {
+    final themeData = _currentThemeData;
+
+    return Scaffold(
+      backgroundColor: themeData.backgroundColor,
+      appBar: AppBar(
+        backgroundColor: themeData.appBarColor,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: themeData.textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _bookTitle,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: themeData.textColor,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          CircleAvatar(
-            radius: 12,
-            backgroundColor: isDarkMode ? Colors.white54 : Colors.grey,
-            child: Icon(
-              Icons.bookmark,
-              size: 16,
-              color: isDarkMode ? Colors.black54 : Colors.white,
+            if (_bookContent != null && _bookContent!.chapters.isNotEmpty)
+              Text(
+                _bookContent!.chapters[_currentChapterIndex].title,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: themeData.secondaryTextColor,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
+        ),
+        actions: [
+          if (_bookContent != null && _bookContent!.chapters.isNotEmpty)
+            IconButton(
+              icon: Icon(Icons.list_alt, color: themeData.textColor),
+              tooltip: 'Table of Contents',
+              onPressed: _showTableOfContents,
             ),
-          ),
-          Expanded(
-            child: Divider(
-              color: isDarkMode ? Colors.white54 : Colors.grey,
-              thickness: 1.5,
-              indent: 10,
-            ),
+          IconButton(
+            icon: Icon(Icons.tune, color: themeData.textColor),
+            tooltip: 'Reading Settings',
+            onPressed: _showAppearanceSettings,
           ),
         ],
+      ),
+      body: _buildBody(themeData),
+      bottomNavigationBar: _buildBottomBar(themeData),
+    );
+  }
+
+  Widget _buildBody(ReaderThemeData themeData) {
+    if (_isLoading) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: themeData.accentColor),
+            const SizedBox(height: 16),
+            Text(
+              'Loading book content...',
+              style: TextStyle(fontSize: 15, color: themeData.secondaryTextColor),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_errorMessage != null && _webReaderLink.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.menu_book, size: 64, color: themeData.secondaryTextColor),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: themeData.textColor),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _loadBook,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: themeData.accentColor,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Google Books Web Reader Mode
+    if (_bookContent == null && _webReaderLink.isNotEmpty) {
+      return _buildWebReaderPreview(themeData);
+    }
+
+    // Dynamic Gutenberg Reader Mode
+    final currentChapter = _bookContent!.chapters[_currentChapterIndex];
+    final currentPageText = currentChapter.pages.isNotEmpty
+        ? currentChapter.pages[_currentPageInChapter]
+        : currentChapter.content;
+
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null) {
+          if (details.primaryVelocity! < -200) {
+            _goToNextPage();
+          } else if (details.primaryVelocity! > 200) {
+            _goToPreviousPage();
+          }
+        }
+      },
+      child: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 18.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SelectableText(
+                currentPageText,
+                style: TextStyle(
+                  fontSize: _fontSize,
+                  height: 1.65,
+                  color: themeData.textColor,
+                  letterSpacing: 0.25,
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebReaderPreview(ReaderThemeData themeData) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 10),
+          if (_bookCover.isNotEmpty)
+            Container(
+              height: 220,
+              width: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadowMedium,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: _bookCover,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(
+                    color: AppColors.cardPlaceholder,
+                    child: const Icon(Icons.book, size: 40),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    color: AppColors.cardPlaceholder,
+                    child: const Icon(Icons.book, size: 40),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 20),
+          Text(
+            _bookTitle,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: themeData.textColor,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            _bookAuthors,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 15,
+              color: themeData.secondaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _openWebReader,
+            icon: const FaIcon(FontAwesomeIcons.googlePlay, size: 16),
+            label: const Text(
+              'Read Google Books Preview',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Opens the official Google Books preview in an in-app browser view.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              color: themeData.secondaryTextColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Divider(color: themeData.dividerColor),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Synopsis',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: themeData.textColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _bookDescription,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: themeData.textColor,
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(ReaderThemeData themeData) {
+    final hasContent = _bookContent != null && _bookContent!.chapters.isNotEmpty;
+
+    final overallPage = hasContent
+        ? _bookContent!.calculateOverallPage(
+            _currentChapterIndex,
+            _currentPageInChapter,
+          )
+        : 1;
+    final totalPages = hasContent ? _bookContent!.totalPages : 1;
+    final currentChapter = hasContent
+        ? _bookContent!.chapters[_currentChapterIndex]
+        : null;
+
+    final canGoPrev = hasContent &&
+        (_currentChapterIndex > 0 || _currentPageInChapter > 0);
+    final canGoNext = hasContent &&
+        (_currentChapterIndex < _bookContent!.chapters.length - 1 ||
+            _currentPageInChapter < (currentChapter?.pageCount ?? 1) - 1);
+
+    return BottomAppBar(
+      color: themeData.bottomBarColor,
+      elevation: 4.0,
+      child: SizedBox(
+        height: 60,
+        child: Row(
+          children: [
+            // Left Actions: Home & Bookmark
+            IconButton(
+              icon: Icon(Icons.home_outlined, color: themeData.textColor),
+              tooltip: 'Home',
+              onPressed: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => HomeScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                color: _isBookmarked
+                    ? themeData.accentColor
+                    : themeData.textColor,
+              ),
+              tooltip: 'Bookmark',
+              onPressed: _toggleBookmark,
+            ),
+            IconButton(
+              icon: Icon(Icons.bookmarks_outlined, color: themeData.textColor),
+              tooltip: 'View Bookmarks',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BookmarkScreen(fromReadingScreen: true),
+                  ),
+                );
+              },
+            ),
+            const Spacer(),
+            // Center Pagination Info
+            if (hasContent)
+              Text(
+                'Ch ${_currentChapterIndex + 1}/${_bookContent!.totalChapters} • Pg $overallPage of $totalPages',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: themeData.textColor,
+                ),
+              ),
+            const Spacer(),
+            // Right Actions: Previous & Next Page
+            IconButton(
+              icon: Icon(
+                Icons.chevron_left,
+                color: canGoPrev
+                    ? themeData.textColor
+                    : themeData.dividerColor,
+              ),
+              tooltip: 'Previous Page',
+              onPressed: canGoPrev ? _goToPreviousPage : null,
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.chevron_right,
+                color: canGoNext
+                    ? themeData.textColor
+                    : themeData.dividerColor,
+              ),
+              tooltip: 'Next Page',
+              onPressed: canGoNext ? _goToNextPage : null,
+            ),
+          ],
+        ),
       ),
     );
   }

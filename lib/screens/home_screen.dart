@@ -9,6 +9,8 @@ import 'package:inkflow/screens/details_screen.dart';
 import 'package:inkflow/screens/profile_screen.dart';
 import 'package:inkflow/screens/reading_screen.dart';
 import 'package:inkflow/services/book_service.dart';
+import 'package:inkflow/services/gutendex_service.dart';
+import 'package:inkflow/services/reading_progress_service.dart';
 import 'package:inkflow/widgets/category_card_widget.dart';
 import 'package:inkflow/widgets/continue_reading_widget.dart';
 import 'package:inkflow/widgets/view_more_card.dart';
@@ -320,6 +322,9 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
+  final GutendexService _gutendexService = GutendexService();
+  Map<String, dynamic>? _activeReadingBook;
+  List<Map<String, dynamic>> _featuredClassics = [];
   List<Map<String, dynamic>> _myBooks = [];
   List<Map<String, dynamic>> _trendingBooks = [];
   List<Map<String, dynamic>> _newArrivals = [];
@@ -339,11 +344,18 @@ class _HomeContentState extends State<HomeContent> {
       final newArrivalsData =
           await _bookService.fetchBooks('subject:general&orderBy=newest');
 
-      setState(() {
-        _myBooks = myBooks;
-        _trendingBooks = trendingBooks;
-        _newArrivals = newArrivalsData;
-      });
+      final activeBook = await ReadingProgressService.getMostRecentBook();
+      final classics = await _gutendexService.getFeaturedClassics();
+
+      if (mounted) {
+        setState(() {
+          _myBooks = myBooks;
+          _trendingBooks = trendingBooks;
+          _newArrivals = newArrivalsData;
+          _activeReadingBook = activeBook;
+          _featuredClassics = classics;
+        });
+      }
     } catch (e) {
       print("Error fetching books: $e");
     }
@@ -523,19 +535,59 @@ class _HomeContentState extends State<HomeContent> {
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 16),
-          ContinueReadingWidget(
-            bookCover: 'assets/images/girl-book-reading.png',
-            bookTitle: 'Book Title Here',
-            currentPage: 20,
-            totalPages: 100,
-            press: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return ReadingScreen(
-                  bookData: {},
-                );
-              }));
-            },
-          ),
+          _activeReadingBook != null
+              ? ContinueReadingWidget(
+                  bookCover: (_activeReadingBook!['bookCover'] as String?)?.isNotEmpty == true
+                      ? _activeReadingBook!['bookCover'] as String
+                      : 'assets/images/girl-book-reading.png',
+                  bookTitle: _activeReadingBook!['bookTitle'] as String? ?? 'Untitled Book',
+                  currentPage: (_activeReadingBook!['currentPage'] as int?) ?? 1,
+                  totalPages: (_activeReadingBook!['totalPages'] as int?) ?? 100,
+                  press: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) {
+                      return ReadingScreen(
+                        bookData: _activeReadingBook!['bookData'] as Map<String, dynamic>? ?? {},
+                      );
+                    })).then((_) => _fetchBooks());
+                  },
+                )
+              : Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.menu_book, color: AppColors.primary, size: 36),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'Start Your Reading Journey',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Pick any classic or catalog title to track your reading progress here.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
           SizedBox(height: 30),
 
           // New Arrival Section
@@ -604,6 +656,56 @@ class _HomeContentState extends State<HomeContent> {
                   ),
           ),
           SizedBox(height: 30),
+
+          // Free Classics Section (Full-Text Gutendex Books)
+          if (_featuredClassics.isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Free Classics (Full Text)',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) {
+                      return BookListingPage(query: 'classic literature');
+                    }));
+                  },
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 260,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _featuredClassics.length,
+                itemBuilder: (context, index) {
+                  final classic = _featuredClassics[index];
+                  return BookCard(
+                    bookCover: classic['thumbnail'] ?? 'assets/images/placeholder.png',
+                    rating: classic['averageRating'] ?? 4.5,
+                    bookTitle: classic['title'] ?? 'Classic',
+                    author: classic['authors'] ?? 'Classic Author',
+                    press: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) {
+                        return ReadingScreen(bookData: classic);
+                      })).then((_) => _fetchBooks());
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
 
           // Categories Section
           Row(

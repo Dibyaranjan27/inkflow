@@ -1,22 +1,51 @@
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart';
 import 'package:inkflow/screens/reading_screen.dart';
-import 'package:inkflow/widgets/continue_reading_widget.dart'; // Make sure to import your widget
+import 'package:inkflow/services/reading_progress_service.dart';
+import 'package:inkflow/widgets/continue_reading_widget.dart';
 
-class ContinueReadingScreen extends StatelessWidget {
+class ContinueReadingScreen extends StatefulWidget {
+  const ContinueReadingScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ContinueReadingScreen> createState() => _ContinueReadingScreenState();
+}
+
+class _ContinueReadingScreenState extends State<ContinueReadingScreen> {
+  List<Map<String, dynamic>> _readingList = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReadingHistory();
+  }
+
+  Future<void> _loadReadingHistory() async {
+    setState(() => _isLoading = true);
+    final list = await ReadingProgressService.getContinueReadingList();
+    if (!mounted) return;
+    setState(() {
+      _readingList = list;
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: kScaffoldBackgroundColor,
-        body: SingleChildScrollView(
-          // Wrap the entire body in SingleChildScrollView
-          child: Padding(
+        body: RefreshIndicator(
+          onRefresh: _loadReadingHistory,
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 18.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Title and Descriptive Text Card
                 Container(
@@ -32,14 +61,14 @@ class ContinueReadingScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                          children: const [
                             Text(
                               'Continue Reading',
                               style: TextStyle(
@@ -48,9 +77,7 @@ class ContinueReadingScreen extends StatelessWidget {
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                            SizedBox(
-                                height:
-                                    8), // Space between title and description
+                            SizedBox(height: 8),
                             Text(
                               'Dive back into your stories and pick up where you left off! Here’s what you’ve been reading:',
                               style: TextStyle(
@@ -62,14 +89,13 @@ class ContinueReadingScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      SizedBox(width: 10), // Space between text and image
+                      const SizedBox(width: 10),
                       ClipRRect(
-                        borderRadius:
-                            BorderRadius.circular(12), // Rounded corners
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.asset(
-                          'assets/images/girl-book-reading.png', // Replace with your image path
+                          'assets/images/girl-book-reading.png',
                           width: 100,
-                          height: 100, // Adjust height as needed
+                          height: 100,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -77,67 +103,125 @@ class ContinueReadingScreen extends StatelessWidget {
                   ),
                 ),
 
-                SizedBox(height: 16), // Space between the card and divider
+                const SizedBox(height: 16),
 
-                // Add Divider with Circle in the middle
+                // Divider with icon
                 Row(
-                  children: [
+                  children: const [
                     Expanded(
                       child: Divider(
-                        color: AppColors.divider, // Line color
-                        thickness: 1.5, // Line thickness
-                        endIndent: 10, // Space at the end
+                        color: AppColors.divider,
+                        thickness: 1.5,
+                        endIndent: 10,
                       ),
                     ),
                     CircleAvatar(
-                      radius: 12, // Circle size
-                      backgroundColor: AppColors.divider, // Circle color
+                      radius: 12,
+                      backgroundColor: AppColors.divider,
                       child: Icon(
                         Icons.bookmark,
-                        size: 16, // Icon size
-                        color: Colors.white, // Icon color
+                        size: 16,
+                        color: AppColors.surface,
                       ),
                     ),
                     Expanded(
                       child: Divider(
-                        color: AppColors.divider, // Line color
-                        thickness: 1.5, // Line thickness
-                        indent: 10, // Space at the beginning
+                        color: AppColors.divider,
+                        thickness: 1.5,
+                        indent: 10,
                       ),
                     ),
                   ],
                 ),
 
-                SizedBox(height: 16), // Space between the card and the list
+                const SizedBox(height: 16),
 
-                // ListView of ContinueReadingWidgets
-                // Changed to a regular ListView instead of an Expanded
-                ListView.builder(
-                  shrinkWrap: true, // Ensures the ListView sizes to its content
-                  physics:
-                      NeverScrollableScrollPhysics(), // Disable inner scrolling
-                  itemCount: 8, // Number of ContinueReadingWidgets
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ContinueReadingWidget(
-                        bookCover:
-                            'assets/images/girl-book-reading.png', // Sample book cover
-                        bookTitle: 'Book Title $index', // Sample title
-                        currentPage: 30 + index, // Sample current page
-                        totalPages: 100,
-                        press: () {
-                          Navigator.push(context,
-                              MaterialPageRoute(builder: (context) {
-                            return ReadingScreen(
-                              bookData: {},
-                            );
-                          }));
-                        }, // Sample total pages
+                // Dynamic Reading List or Empty State
+                if (_isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  )
+                else if (_readingList.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 36,
+                      horizontal: 20,
+                    ),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(
+                          Icons.auto_stories_outlined,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
+                        SizedBox(height: 14),
+                        Text(
+                          'No books in progress',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Pick any classic or catalog title from the Home tab to begin reading. Your reading position and progress will be tracked here!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _readingList.length,
+                    itemBuilder: (context, index) {
+                      final item = _readingList[index];
+                      final bookData = item['bookData'] as Map<String, dynamic>? ?? {};
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: ContinueReadingWidget(
+                          bookCover: (item['bookCover'] as String?)?.isNotEmpty == true
+                              ? item['bookCover'] as String
+                              : 'assets/images/placeholder.png',
+                          bookTitle: item['bookTitle'] as String? ?? 'Untitled Book',
+                          currentPage: (item['currentPage'] as int?) ?? 1,
+                          totalPages: (item['totalPages'] as int?) ?? 100,
+                          press: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReadingScreen(
+                                  bookData: bookData,
+                                ),
+                              ),
+                            ).then((_) => _loadReadingHistory());
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                const SizedBox(height: 24),
               ],
             ),
           ),
