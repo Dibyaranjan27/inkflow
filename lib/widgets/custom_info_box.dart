@@ -21,8 +21,8 @@ class CustomInfoBox extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
-        color: AppColors.surface, // Set the fill color to match your theme
-        boxShadow: [
+        color: AppColors.surface,
+        boxShadow: const [
           BoxShadow(
             color: AppColors.shadowMedium,
             blurRadius: 5,
@@ -35,38 +35,42 @@ class CustomInfoBox extends StatelessWidget {
         children: [
           Container(
             width: 100,
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
           ),
           Container(
             width: double.infinity,
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey[200], // Grey background for content area
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: AppColors.background,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(12),
                 bottomRight: Radius.circular(12),
               ),
-            ), // Grey background for content area
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: AppColors.primary), // Icon for content
-                SizedBox(width: 8),
+                Icon(icon, color: AppColors.primary),
+                const SizedBox(width: 8),
                 Text(
                   content,
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),

@@ -139,18 +139,17 @@ class _ReadingScreenState extends State<ReadingScreen> {
       bookContent = []; // Use actual content if available
       webReaderLink = widget.bookData['webReaderLink'] ?? '';
       isLoading = false;
-      pages = widget.bookData['pageCount'].toString() ?? 'N/A';
-      bookCover = widget.bookData != null
-          ? (widget.bookData['thumbnail'] ??
-              widget.bookData['imageLinks']?['thumbnail'] ??
-              'assets/images/default_thumbnail.png')
-          : 'assets/images/default_thumbnail.png';
+      pages = widget.bookData['pageCount']?.toString() ?? 'N/A';
+      bookCover = widget.bookData['thumbnail'] ??
+          widget.bookData['imageLinks']?['thumbnail'] ??
+          'assets/images/default_thumbnail.png';
     });
   }
 
   Future<void> openWebReader() async {
-    if (await canLaunchUrl(webReaderLink as Uri)) {
-      await launchUrl(webReaderLink as Uri); // Open in browser
+    final uri = Uri.tryParse(webReaderLink);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri); // Open in browser
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Web Reader Unavailable')),

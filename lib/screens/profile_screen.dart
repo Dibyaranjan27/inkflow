@@ -35,7 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       String? user = prefs.getString('email');
       String key = '${user}_profileImagePath';
       String? imagePath = prefs.getString(key) ?? '';
-      if (imagePath != null) {
+      if (imagePath.isNotEmpty) {
         setState(() {
           _imageFile = File(imagePath); // Load the profile image from file path
         });
@@ -98,11 +98,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         child: ClipOval(
                           child: _imageFile != null
-                              ? (Image.file(
+                              ? Image.file(
                                     _imageFile!,
                                     fit: BoxFit.cover,
-                                  ) ??
-                                  Image.asset('assets/images/images.png'))
+                                  )
                               : Icon(Icons.person, size: 70),
                         ),
                       ),

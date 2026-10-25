@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:inkflow/constants.dart';
 
 class BookService {
-  final String _apiKey = 'AIzaSyDJN3_7ORDyMtHvDClxxAAQtsH2TlAlSxc';
+  final String _apiKey = kGoogleBooksApiKey;
 
   Future<List<Map<String, dynamic>>> fetchBooks(String query) async {
     final String url =
@@ -11,18 +12,21 @@ class BookService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      if (data['items'] == null) {
+        return [];
+      }
       return (data['items'] as List).map((item) {
-        final volumeInfo = item['volumeInfo'];
+        final volumeInfo = item['volumeInfo'] ?? {};
         return {
           'title': volumeInfo['title'] ?? 'No Title',
-          'authors': volumeInfo['authors']?.join(', ') ?? 'Unknown',
+          'authors': (volumeInfo['authors'] as List?)?.join(', ') ?? 'Unknown',
           'pageCount': volumeInfo['pageCount'] ?? 0,
           'description': volumeInfo['description'] ?? 'No Description',
           'thumbnail': volumeInfo['imageLinks']?['thumbnail'] ?? '',
         };
       }).toList();
     } else {
-      throw Exception('Failed to load books');
+      throw Exception('Failed to load books: ${response.statusCode}');
     }
   }
 }

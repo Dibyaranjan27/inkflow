@@ -17,7 +17,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final User? user = FirebaseAuth.instance.currentUser;
 
   @override

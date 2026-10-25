@@ -33,13 +33,11 @@ class _BookmarkScreenState extends State<BookmarkScreen> {
     List<String> bookmarkedBooks = prefs.getStringList(key) ?? [];
 
     // Decode the list of bookmarked books
-    if (bookmarkedBooks != null) {
-      setState(() {
-        _myBooks = bookmarkedBooks
-            .map((book) => json.decode(book) as Map<String, dynamic>)
-            .toList();
-      });
-    }
+    setState(() {
+      _myBooks = bookmarkedBooks
+          .map((book) => json.decode(book) as Map<String, dynamic>)
+          .toList();
+    });
   }
 
   @override

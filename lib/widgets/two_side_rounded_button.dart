@@ -1,26 +1,27 @@
-﻿import 'package:inkflow/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class TwoSideRoundedButton extends StatelessWidget {
   final String text;
   final double radious;
-  final VoidCallback press; // Updated to VoidCallback
+  final VoidCallback press;
+
   const TwoSideRoundedButton({
-    Key? key, // Nullable Key
-    required this.text, // Marked as required
+    Key? key,
+    required this.text,
     this.radious = 29,
-    required this.press, // Marked as required
+    required this.press,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: press, // Corrected the type of callback
+      onTap: press,
       child: Container(
         alignment: Alignment.center,
-        padding: EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: kBlackColor,
+          color: AppColors.textPrimary,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(radious),
             bottomRight: Radius.circular(radious),
@@ -28,7 +29,7 @@ class TwoSideRoundedButton extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: AppColors.surface),
         ),
       ),
     );

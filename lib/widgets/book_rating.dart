@@ -1,5 +1,5 @@
-import 'package:inkflow/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:inkflow/theme/app_theme.dart';
 
 class BookRating extends StatelessWidget {
   final double score;
@@ -11,7 +11,7 @@ class BookRating extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -25,17 +25,18 @@ class BookRating extends StatelessWidget {
       ),
       child: Column(
         children: <Widget>[
-          Icon(
+          const Icon(
             Icons.star,
-            color: kIconColor,
+            color: AppColors.star,
             size: 15,
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Text(
             "$score",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
           ),
         ],

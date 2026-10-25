@@ -127,7 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _showNotification() async {
     if (_isNotificationsEnabled) {
-      final now = TimeOfDay.now();
       final selected = _selectedTime;
 
       // Calculate delay based on the difference between the selected time and now
@@ -324,10 +323,6 @@ class _HomeContentState extends State<HomeContent> {
   List<Map<String, dynamic>> _myBooks = [];
   List<Map<String, dynamic>> _trendingBooks = [];
   List<Map<String, dynamic>> _newArrivals = [];
-  List<Map<String, dynamic>> _fictionBooks = [];
-  List<Map<String, dynamic>> _scienceBooks = [];
-  List<Map<String, dynamic>> _historyBooks = [];
-  List<Map<String, dynamic>> _technologyBooks = [];
 
   @override
   void initState() {

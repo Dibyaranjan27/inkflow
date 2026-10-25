@@ -65,17 +65,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
   Widget build(BuildContext context) {
     // Access book details from the widget's passed data
     final String bookTitle =
-        widget.myBook['title'].toString() ?? 'Unknown Title';
+        widget.myBook['title']?.toString() ?? 'Unknown Title';
     var author = widget.myBook['authors'] ?? 'Unknown Author';
     final String authorName = author.toString();
-    final String bookCover = widget.myBook != null
-        ? (widget.myBook['thumbnail'] ??
-            widget.myBook['imageLinks']?['thumbnail'] ??
-            'assets/images/default_thumbnail.png')
-        : 'assets/images/default_thumbnail.png';
+    final String bookCover = widget.myBook['thumbnail'] ??
+        widget.myBook['imageLinks']?['thumbnail'] ??
+        'assets/images/default_thumbnail.png';
     var rate = widget.myBook['averageRating'] ?? 0.0;
     final String rating = rate == 0.0 ? 'N/A' : rate.toString();
-    final String pages = widget.myBook['pageCount'].toString() ?? 'N/A';
+    final String pages = widget.myBook['pageCount']?.toString() ?? 'N/A';
     final String language = widget.myBook['language'] ?? 'N/A';
     final String description =
         widget.myBook['description'] ?? 'No description available.';
