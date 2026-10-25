@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:inkflow/theme/app_theme.dart';
 
@@ -14,6 +15,14 @@ class SimplifiedBookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ImageProvider imageProvider = bookCover.startsWith('http')
+        ? CachedNetworkImageProvider(bookCover)
+        : AssetImage(
+            bookCover.isNotEmpty
+                ? bookCover
+                : 'assets/images/girl-book-reading.png',
+          ) as ImageProvider;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: GestureDetector(
@@ -32,7 +41,7 @@ class SimplifiedBookCard extends StatelessWidget {
               ),
             ],
             image: DecorationImage(
-              image: NetworkImage(bookCover),
+              image: imageProvider,
               filterQuality: FilterQuality.high,
               fit: BoxFit.cover,
             ),

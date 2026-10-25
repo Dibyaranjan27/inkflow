@@ -1,43 +1,57 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:inkflow/constants.dart';
-import 'package:inkflow/screens/details_screen.dart';
-import 'package:inkflow/widgets/book_card_widget.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:http/http.dart' as http;
+import 'package:inkflow/screens/details_screen.dart';
+import 'package:inkflow/services/book_service.dart';
+import 'package:inkflow/theme/app_theme.dart';
+import 'package:inkflow/widgets/book_card_widget.dart';
 
 class BookListingPage extends StatefulWidget {
-  final String? query; // Accepting a query string
+  final String? query;
 
-  BookListingPage({this.query}); // Constructor to receive query
+  const BookListingPage({Key? key, this.query}) : super(key: key);
 
   @override
   _BookListingPageState createState() => _BookListingPageState();
 }
 
 class _BookListingPageState extends State<BookListingPage> {
-  List<String> categories = ['All']; // Default to 'All'
-  String? selectedCategory = 'All'; // Track the selected category
-  List<dynamic> books = []; // To store fetched books
-  TextEditingController searchController =
-      TextEditingController(); // Controller for search bar
-  bool isLoading = false; // Track loading state
+  final BookService _bookService = BookService();
+  final TextEditingController searchController = TextEditingController();
+
+  List<String> categories = ['All'];
+  String selectedCategory = 'All';
+  List<Map<String, dynamic>> books = [];
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    fetchCategories(); // Fetch categories when the page loads
-    if (widget.query != null && widget.query!.isNotEmpty) {
-      fetchBooks(widget.query!); // Fetch books based on query if provided
+    fetchCategories();
+
+    final initialQuery = widget.query?.trim();
+    if (initialQuery != null && initialQuery.isNotEmpty) {
+      // Find matching category if applicable
+      for (final cat in categories) {
+        if (cat.toLowerCase() == initialQuery.toLowerCase()) {
+          selectedCategory = cat;
+          break;
+        }
+      }
+      fetchBooks(initialQuery);
     } else {
-      fetchBooks('All'); // Fetch all books initially
+      fetchBooks('All');
     }
   }
 
-  // Function to fetch categories from Google Books API
-  Future<void> fetchCategories() async {
-    List<String> apiCategories = [
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  void fetchCategories() {
+    const List<String> apiCategories = [
       'Fiction',
       'Science',
       'History',
@@ -58,59 +72,48 @@ class _BookListingPageState extends State<BookListingPage> {
       'Comics',
       'Religion',
       'Philosophy',
-      'Politics'
+      'Politics',
     ];
 
     setState(() {
-      categories.addAll(apiCategories);
+      categories = ['All', ...apiCategories];
     });
   }
 
-  // Function to fetch books from Google Books API based on selected category or search query
+  /// Fetches books using the resilient [BookService] with multi-tier fallback.
   Future<void> fetchBooks(String query) async {
+    if (!mounted) return;
     setState(() {
-      isLoading = true; // Set loading to true when fetching books
+      isLoading = true;
     });
 
-    String apiQuery = query == 'All' ? '' : query; // Adjust query for all books
-    int totalResults = 45; // Target number of results
-    int maxResultsPerPage = 10; // Number of results per request
-    List<dynamic> allBooks = []; // Store all fetched books
-    int startIndex = 0; // Starting index for pagination
+    try {
+      final cleanQuery = query == 'All' || query.trim().isEmpty ? 'bestseller' : query.trim();
+      final fetched = await _bookService.fetchBooks(cleanQuery, maxResults: 30);
 
-    while (allBooks.length < totalResults) {
-      final url = Uri.parse(
-          'https://www.googleapis.com/books/v1/volumes?q=$apiQuery&maxResults=$maxResultsPerPage&startIndex=$startIndex&key=AIzaSyDJN3_7ORDyMtHvDClxxAAQtsH2TlAlSxc');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> books = data['items'] ?? [];
-        allBooks.addAll(books); // Add fetched books to the list
-
-        // If there are fewer results than requested, stop fetching
-        if (books.length < maxResultsPerPage) {
-          break;
-        }
-
-        startIndex += maxResultsPerPage; // Move to the next page
-      } else {
-        throw Exception('Failed to load books');
+      if (mounted) {
+        setState(() {
+          books = fetched;
+          isLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          books = [];
+          isLoading = false;
+        });
       }
     }
-
-    setState(() {
-      // Update the state with the fetched books, limited to the total desired results
-      this.books = allBooks.take(totalResults).toList();
-      isLoading = false; // Set loading to false when fetching is complete
-    });
   }
 
-  // Function to handle search when the user submits their query
   void handleSearch() {
-    String searchQuery = searchController.text.trim();
+    final String searchQuery = searchController.text.trim();
     if (searchQuery.isNotEmpty) {
-      fetchBooks(searchQuery); // Fetch books based on the search query
+      setState(() {
+        selectedCategory = '';
+      });
+      fetchBooks(searchQuery);
     }
   }
 
@@ -121,143 +124,206 @@ class _BookListingPageState extends State<BookListingPage> {
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: kScaffoldBackgroundColor,
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          backgroundColor: kScaffoldBackgroundColor,
+          backgroundColor: AppColors.background,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            selectedCategory.isNotEmpty && selectedCategory != 'All'
+                ? selectedCategory
+                : (widget.query != null && widget.query!.isNotEmpty ? 'Catalog' : 'All Books'),
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
           actions: [
             IconButton(
-              icon: Icon(FontAwesomeIcons.bell, color: Colors.black),
+              icon: const Icon(FontAwesomeIcons.bell, color: AppColors.textPrimary, size: 20),
               onPressed: () {
-                // Notification logic
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No new notifications')),
+                );
               },
             ),
-            SizedBox(width: 10.0),
+            const SizedBox(width: 8.0),
           ],
         ),
         body: Column(
           children: [
+            // Search Input
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: screenWidth * 0.04,
                 vertical: screenHeight * 0.01,
               ),
               child: Material(
-                elevation: 5,
+                elevation: 3,
                 shadowColor: AppColors.shadowMedium,
                 borderRadius: BorderRadius.circular(12),
                 child: TextField(
-                  controller:
-                      searchController, // Use the controller for the input
-                  onSubmitted: (value) {
-                    handleSearch(); // Call handleSearch on submit
-                  },
+                  controller: searchController,
+                  onSubmitted: (_) => handleSearch(),
                   decoration: InputDecoration(
-                    hintText: 'Search books...',
-                    prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
+                    hintText: 'Search books by title, author, topic...',
+                    hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                    suffixIcon: searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 18),
+                            onPressed: () {
+                              searchController.clear();
+                              fetchBooks(selectedCategory.isNotEmpty ? selectedCategory : 'All');
+                            },
+                          )
+                        : null,
                     filled: true,
                     fillColor: AppColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
             ),
-            SizedBox(height: 10),
 
-            // Categories Section
+            // Horizontal Categories Carousel
             Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: screenWidth * 0.04,
-                vertical: screenHeight * 0.01,
+                vertical: 6.0,
               ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: categories.map((category) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() {
-                            selectedCategory = category;
-                            fetchBooks(category); // Fetch books for category
-                          });
-                        },
-                        style: TextButton.styleFrom(
-                          backgroundColor: selectedCategory == category
-                              ? Colors.grey[300]
-                              : Colors.white,
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: BorderSide(color: Colors.grey, width: 1.0),
-                          ),
-                        ),
-                        child: Text(
-                          category,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: selectedCategory == category
-                                ? Colors.black
-                                : Colors.black54,
+              child: SizedBox(
+                height: 40,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final category = categories[index];
+                    final isSelected = selectedCategory == category;
+                    return ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          selectedCategory = category;
+                          searchController.clear();
+                        });
+                        fetchBooks(category);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isSelected ? AppColors.primary : AppColors.surface,
+                        foregroundColor: isSelected ? Colors.white : AppColors.textPrimary,
+                        elevation: isSelected ? 2 : 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected ? AppColors.primary : Colors.grey.shade300,
+                            width: 1,
                           ),
                         ),
                       ),
+                      child: Text(
+                        category,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
                     );
-                  }).toList(),
+                  },
                 ),
               ),
             ),
+            const SizedBox(height: 6),
 
             // GridView for Books
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: isLoading // Show loader if loading
-                    ? Center(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: isLoading
+                    ? const Center(
                         child: SpinKitWaveSpinner(
-                            color: kLogoColor,
-                            waveColor: kWaveColor,
-                            trackColor: kTrackColor,
-                            size: 50.0))
+                          color: AppColors.primary,
+                          waveColor: AppColors.primaryLight,
+                          trackColor: AppColors.cardPlaceholder,
+                          size: 55.0,
+                        ),
+                      )
                     : books.isEmpty
-                        ? Center(child: Text("No books found"))
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.book_outlined, size: 64, color: Colors.grey.shade400),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No books found',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () => fetchBooks('All'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                  ),
+                                  child: const Text('Reset to All', style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          )
                         : GridView.builder(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: screenWidth < 600 ? 3 : 4,
                               crossAxisSpacing: 4,
                               mainAxisSpacing: 10,
-                              childAspectRatio: screenWidth < 300 ? 0.6 : 0.43,
+                              childAspectRatio: screenWidth < 300 ? 0.58 : 0.44,
                             ),
                             itemCount: books.length,
                             itemBuilder: (context, index) {
-                              final dynamic book = books[index]['volumeInfo'];
+                              final Map<String, dynamic> rawBook = books[index];
+                              final Map<String, dynamic> book =
+                                  rawBook['volumeInfo'] is Map<String, dynamic>
+                                      ? rawBook['volumeInfo'] as Map<String, dynamic>
+                                      : rawBook;
+
+                              final String cover = book['thumbnail']?.toString() ??
+                                  book['imageLinks']?['thumbnail']?.toString() ??
+                                  'assets/images/girl-book-reading.png';
+                              final String title = book['title']?.toString() ?? 'Untitled Book';
+                              final dynamic authorsRaw = book['authors'] ?? book['author'];
+                              final String author = authorsRaw is List
+                                  ? authorsRaw.join(', ')
+                                  : (authorsRaw?.toString() ?? 'Unknown Author');
+                              final double rating =
+                                  (book['averageRating'] as num?)?.toDouble() ??
+                                  (book['rating'] as num?)?.toDouble() ??
+                                  4.5;
+
                               return BookCard(
-                                bookCover: book['imageLinks'] != null
-                                    ? book['imageLinks']['thumbnail']
-                                    : 'assets/images/girl-book-reading.png',
+                                bookCover: cover,
+                                rating: rating,
+                                bookTitle: title,
+                                author: author,
                                 press: () {
-                                  Navigator.push(context,
-                                      MaterialPageRoute(builder: (context) {
-                                    return DetailsScreen(book);
-                                  }));
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DetailsScreen(rawBook),
+                                    ),
+                                  );
                                 },
-                                rating: book['averageRating']?.toDouble() ?? 0,
-                                bookTitle: book['title'] ?? 'No title',
-                                author: book['authors'] != null
-                                    ? book['authors'].join(', ')
-                                    : 'Unknown',
                               );
                             },
                           ),
