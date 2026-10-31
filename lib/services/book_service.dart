@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:inkflow/constants.dart';
+import 'package:inkflow/services/app_config.dart';
 
 /// Service for fetching books and catalog metadata.
 /// Provides a resilient multi-tier fallback architecture:
@@ -11,7 +11,7 @@ import 'package:inkflow/constants.dart';
 /// 3. If remote network is unavailable or times out, it serves rich curated
 ///    catalog data so the user never encounters a blank screen or 403 error.
 class BookService {
-  final String _apiKey = kGoogleBooksApiKey;
+  // API key dynamically resolved via AppConfig from local.properties or dart-define
   static const String _gutendexUrl = 'https://gutendex.com/books';
 
   static const Map<String, String> _headers = {
@@ -26,23 +26,26 @@ class BookService {
     int maxResults = 20,
     String? orderBy,
   }) async {
-    // 1. Attempt Google Books API
+    // 1. Attempt Google Books API if key is present
     try {
-      String url =
-          'https://www.googleapis.com/books/v1/volumes?q=$query&startIndex=$startIndex&maxResults=$maxResults&key=$_apiKey';
-      if (orderBy != null && orderBy.isNotEmpty) {
-        url += '&orderBy=$orderBy';
-      }
+      final apiKey = await AppConfig.getGoogleBooksApiKey();
+      if (apiKey.isNotEmpty) {
+        String url =
+            'https://www.googleapis.com/books/v1/volumes?q=$query&startIndex=$startIndex&maxResults=$maxResults&key=$apiKey';
+        if (orderBy != null && orderBy.isNotEmpty) {
+          url += '&orderBy=$orderBy';
+        }
 
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 5));
+        final response = await http
+            .get(Uri.parse(url))
+            .timeout(const Duration(seconds: 5));
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final items = data['items'] as List?;
-        if (items != null && items.isNotEmpty) {
-          return items.map((item) => _formatGoogleBook(item)).toList();
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final items = data['items'] as List?;
+          if (items != null && items.isNotEmpty) {
+            return items.map((item) => _formatGoogleBook(item)).toList();
+          }
         }
       }
     } catch (_) {
@@ -119,17 +122,20 @@ class BookService {
       }
     }
 
-    // 2. Try Google Books API
+    // 2. Try Google Books API if key is available
     try {
-      final String url =
-          'https://www.googleapis.com/books/v1/volumes/$volumeId?key=$_apiKey';
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 5));
+      final apiKey = await AppConfig.getGoogleBooksApiKey();
+      if (apiKey.isNotEmpty) {
+        final String url =
+            'https://www.googleapis.com/books/v1/volumes/$volumeId?key=$apiKey';
+        final response = await http
+            .get(Uri.parse(url))
+            .timeout(const Duration(seconds: 5));
 
-      if (response.statusCode == 200) {
-        final item = json.decode(response.body);
-        return _formatGoogleBook(item);
+        if (response.statusCode == 200) {
+          final item = json.decode(response.body);
+          return _formatGoogleBook(item);
+        }
       }
     } catch (_) {}
 

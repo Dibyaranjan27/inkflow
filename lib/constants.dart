@@ -25,7 +25,11 @@ const Color kTrackColor = AppColors.spinnerTrack;
 
 // Application Configuration Constants
 const String kAppName = 'Inkflow';
-const String kGoogleBooksApiKey = 'AIzaSyDJN3_7ORDyMtHvDClxxAAQtsH2TlAlSxc';
+
+/// Google Books API key is loaded dynamically from local.properties or compile-time dart-define.
+/// Keep sensitive keys out of tracked source code!
+const String kGoogleBooksApiKey =
+    String.fromEnvironment('GOOGLE_BOOKS_API_KEY', defaultValue: '');
 
 // Shared Preferences Storage Keys
 const String kPrefIsLoggedIn = 'isLoggedIn';

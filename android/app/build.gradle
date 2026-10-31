@@ -26,6 +26,8 @@ if (flutterVersionName == null) {
     flutterVersionName = "1.0"
 }
 
+def googleBooksApiKey = localProperties.getProperty("GOOGLE_BOOKS_API_KEY") ?: localProperties.getProperty("google.books.api.key") ?: ""
+
 android {
     namespace = "com.dibya.inkflow"
     compileSdk = flutter.compileSdkVersion
@@ -53,6 +55,7 @@ android {
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
         resValue "string", "facebook_app_id", "1591063685143093"
+        resValue "string", "google_books_api_key", googleBooksApiKey
     }
 
     buildTypes {

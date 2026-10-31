@@ -1,0 +1,14 @@
+# Inkflow Configuration Example
+#
+# To supply your Google Books API key securely without committing it to git:
+# 1. Open or create `android/local.properties` (or `local.properties` in the project root).
+# 2. Add your Google Books API Key:
+#
+#    GOOGLE_BOOKS_API_KEY=your_actual_google_books_api_key_here
+#
+# Note: `local.properties` is listed in `.gitignore` and is NEVER committed to Git.
+#
+# Alternatively, you can run the app with --dart-define:
+#    flutter run --dart-define=GOOGLE_BOOKS_API_KEY=your_key_here
+# Or using --dart-define-from-file:
+#    flutter run --dart-define-from-file=local.properties
