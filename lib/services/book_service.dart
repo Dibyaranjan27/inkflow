@@ -207,7 +207,8 @@ class BookService {
           volumeInfo['canonicalVolumeLink']?.toString() ?? '',
       'isGutenberg': false,
     };
-    map['volumeInfo'] = map;
+    final volumeInfoMap = Map<String, dynamic>.from(map);
+    map['volumeInfo'] = volumeInfoMap;
     return map;
   }
 
@@ -256,7 +257,8 @@ class BookService {
       'textUrl': textUrl,
       'isGutenberg': true,
     };
-    map['volumeInfo'] = map;
+    final volumeInfoMap = Map<String, dynamic>.from(map);
+    map['volumeInfo'] = volumeInfoMap;
     return map;
   }
 
@@ -277,7 +279,8 @@ class BookService {
     return list.map((b) {
       final item = Map<String, dynamic>.from(b);
       item['imageLinks'] ??= {'thumbnail': item['thumbnail'] ?? ''};
-      item['volumeInfo'] ??= item;
+      final volInfo = Map<String, dynamic>.from(item);
+      item['volumeInfo'] = volInfo;
       return item;
     }).toList();
   }

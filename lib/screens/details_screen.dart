@@ -28,37 +28,83 @@ class _DetailsScreenState extends State<DetailsScreen> {
     _checkIfBookmarked();
   }
 
+  Map<String, dynamic> _cleanBookForBookmark() {
+    final raw = widget.myBook;
+    return {
+      'id': raw['id']?.toString() ?? '',
+      'title': raw['title']?.toString() ?? 'Unknown Title',
+      'authors': raw['authors']?.toString() ?? raw['author']?.toString() ?? 'Unknown Author',
+      'thumbnail': raw['thumbnail']?.toString() ?? raw['imageLinks']?['thumbnail']?.toString() ?? '',
+      'rating': raw['rating'] ?? raw['averageRating'] ?? 0.0,
+      'averageRating': raw['averageRating'] ?? raw['rating'] ?? 0.0,
+      'pageCount': raw['pageCount'] ?? 0,
+      'language': raw['language']?.toString() ?? 'en',
+      'description': raw['description']?.toString() ?? '',
+      'textUrl': raw['textUrl']?.toString() ?? '',
+      'gutenbergId': raw['gutenbergId'],
+      'isGutenberg': raw['isGutenberg'] ?? false,
+      'webReaderLink': raw['webReaderLink']?.toString() ?? '',
+    };
+  }
+
   // Check if the book is already bookmarked
   Future<void> _checkIfBookmarked() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('email');
+    String username = prefs.getString('email') ?? 'guest';
 
     // Create a unique key for the user
     String key = '${username}_bookmarkedBooks';
     List<String> bookmarkedBooks = prefs.getStringList(key) ?? [];
 
-    setState(() {
-      isBookmarked = bookmarkedBooks.contains(json.encode(widget.myBook));
+    final currentId = (widget.myBook['id'] ?? widget.myBook['title'])?.toString();
+    final isMarked = bookmarkedBooks.any((item) {
+      try {
+        final decoded = json.decode(item) as Map<String, dynamic>;
+        final id = (decoded['id'] ?? decoded['title'])?.toString();
+        return id == currentId;
+      } catch (_) {
+        return false;
+      }
     });
+
+    if (mounted) {
+      setState(() {
+        isBookmarked = isMarked;
+      });
+    }
   }
 
   Future<void> _toggleBookmark() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? username = prefs.getString('email');
+    String username = prefs.getString('email') ?? 'guest';
     String key = '${username}_bookmarkedBooks';
     List<String> bookmarkedBooks = prefs.getStringList(key) ?? [];
 
+    final currentId = (widget.myBook['id'] ?? widget.myBook['title'])?.toString();
+    final cleanMap = _cleanBookForBookmark();
+    final encoded = json.encode(cleanMap);
+
     if (isBookmarked) {
-      bookmarkedBooks.remove(json.encode(widget.myBook));
+      bookmarkedBooks.removeWhere((item) {
+        try {
+          final decoded = json.decode(item) as Map<String, dynamic>;
+          final id = (decoded['id'] ?? decoded['title'])?.toString();
+          return id == currentId;
+        } catch (_) {
+          return false;
+        }
+      });
     } else {
-      bookmarkedBooks.add(json.encode(widget.myBook));
+      bookmarkedBooks.add(encoded);
     }
 
     await prefs.setStringList(key, bookmarkedBooks);
 
-    setState(() {
-      isBookmarked = !isBookmarked; // Toggle the state
-    });
+    if (mounted) {
+      setState(() {
+        isBookmarked = !isBookmarked; // Toggle the state
+      });
+    }
   }
 
   @override
@@ -100,8 +146,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
                             child: Container(
                               decoration: BoxDecoration(
                                 image: DecorationImage(
-                                  image: NetworkImage(
-                                      bookCover), // Use dynamic cover
+                                  image: (bookCover.startsWith('http')
+                                      ? NetworkImage(bookCover)
+                                      : AssetImage(bookCover.isNotEmpty
+                                          ? bookCover
+                                          : 'assets/images/girl-book-reading.png')) as ImageProvider, // Use dynamic cover
                                   fit: BoxFit.cover,
                                   alignment: Alignment.topCenter,
                                 ),

@@ -15,14 +15,6 @@ class SimplifiedBookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ImageProvider imageProvider = bookCover.startsWith('http')
-        ? CachedNetworkImageProvider(bookCover)
-        : AssetImage(
-            bookCover.isNotEmpty
-                ? bookCover
-                : 'assets/images/girl-book-reading.png',
-          ) as ImageProvider;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: GestureDetector(
@@ -40,11 +32,42 @@ class SimplifiedBookCard extends StatelessWidget {
                 offset: Offset(0, 3),
               ),
             ],
-            image: DecorationImage(
-              image: imageProvider,
-              filterQuality: FilterQuality.high,
-              fit: BoxFit.cover,
-            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: bookCover.startsWith('http')
+                ? CachedNetworkImage(
+                    imageUrl: bookCover,
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.medium,
+                    placeholder: (context, url) => Container(
+                      color: AppColors.cardPlaceholder,
+                      child: const Center(
+                        child: Icon(Icons.menu_book,
+                            color: AppColors.textSecondary, size: 36),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.cardPlaceholder,
+                      child: const Center(
+                        child: Icon(Icons.menu_book,
+                            color: AppColors.primary, size: 36),
+                      ),
+                    ),
+                  )
+                : Image.asset(
+                    bookCover.isNotEmpty
+                        ? bookCover
+                        : 'assets/images/girl-book-reading.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.cardPlaceholder,
+                      child: const Center(
+                        child: Icon(Icons.menu_book,
+                            color: AppColors.textSecondary, size: 36),
+                      ),
+                    ),
+                  ),
           ),
         ),
       ),

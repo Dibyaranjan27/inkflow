@@ -328,6 +328,34 @@ class _ReadingScreenState extends State<ReadingScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      final dynamic rawGutenbergId =
+          widget.bookData['gutenbergId'] ?? widget.bookData['id'];
+      int? gId;
+      if (rawGutenbergId is int) {
+        gId = rawGutenbergId;
+      } else if (rawGutenbergId is String) {
+        gId = int.tryParse(rawGutenbergId);
+      }
+
+      final offlineContent = _gutendexService.getOfflineFallbackBookContent(
+        gutenbergId: gId ?? 0,
+        title: _bookTitle,
+        author: _bookAuthors,
+        coverUrl: _bookCover,
+      );
+
+      if (offlineContent != null && offlineContent.chapters.isNotEmpty) {
+        setState(() {
+          _bookContent = offlineContent;
+          _currentChapterIndex = 0;
+          _currentPageInChapter = 0;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+        _saveProgress();
+        return;
+      }
+
       setState(() {
         _isLoading = false;
         _errorMessage = 'Failed to load reading content: $e';

@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:inkflow/services/offline_classics_data.dart';
 import 'package:inkflow/models/book_content.dart';
 import 'package:inkflow/services/gutenberg_parser.dart';
 
@@ -338,6 +340,17 @@ class GutendexService {
     urlsToTry.add('https://www.gutenberg.org/files/$gutenbergId/$gutenbergId-0.txt');
     urlsToTry.add('https://www.gutenberg.org/cache/epub/$gutenbergId/pg$gutenbergId.txt');
 
+    // On Web, direct gutenberg.org requests are blocked by browser CORS.
+    // Try CORS proxy mirrors first on web to ensure high reliability.
+    if (kIsWeb) {
+      final directList = List<String>.from(urlsToTry);
+      urlsToTry.clear();
+      for (final direct in directList) {
+        urlsToTry.add('https://api.allorigins.win/raw?url=' + Uri.encodeComponent(direct));
+      }
+      urlsToTry.addAll(directList);
+    }
+
     String? downloadedText;
     Exception? lastException;
 
@@ -360,6 +373,14 @@ class GutendexService {
         }
       } catch (e) {
         lastException = Exception('Failed to download from $url: $e');
+      }
+    }
+
+    if (downloadedText == null || downloadedText.trim().isEmpty) {
+      // Fallback: Check bundled offline classics
+      final offline = OfflineClassicsData.getTextForId(gutenbergId);
+      if (offline != null && offline.trim().isNotEmpty) {
+        downloadedText = offline;
       }
     }
 
@@ -428,32 +449,63 @@ class GutendexService {
     }
   }
 
-  // --- Local Disk Caching Helpers ---
+  // --- Local & Web Caching Helpers ---
 
-  Future<File> getCacheFile(int gutenbergId) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final cacheDir = Directory('${directory.path}/gutenberg_cache');
-    if (!await cacheDir.exists()) {
-      await cacheDir.create(recursive: true);
+  static final Map<int, String> _memoryCache = {};
+
+  Future<File?> getCacheFile(int gutenbergId) async {
+    if (kIsWeb) return null;
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final cacheDir = Directory('${directory.path}/gutenberg_cache');
+      if (!await cacheDir.exists()) {
+        await cacheDir.create(recursive: true);
+      }
+      return File('${cacheDir.path}/book_$gutenbergId.txt');
+    } catch (_) {
+      return null;
     }
-    return File('${cacheDir.path}/book_$gutenbergId.txt');
   }
 
   Future<bool> isBookCached(int gutenbergId) async {
+    if (_memoryCache.containsKey(gutenbergId)) return true;
+    if (kIsWeb) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.containsKey('gutenberg_cache_$gutenbergId');
+      } catch (_) {
+        return false;
+      }
+    }
     try {
       final file = await getCacheFile(gutenbergId);
-      return await file.exists() && (await file.length()) > 0;
+      return file != null && await file.exists() && (await file.length()) > 0;
     } catch (_) {
       return false;
     }
   }
 
   Future<String?> getCachedText(int gutenbergId) async {
+    if (_memoryCache.containsKey(gutenbergId)) {
+      return _memoryCache[gutenbergId];
+    }
+    if (kIsWeb) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final text = prefs.getString('gutenberg_cache_$gutenbergId');
+        if (text != null && text.isNotEmpty) {
+          _memoryCache[gutenbergId] = text;
+          return text;
+        }
+      } catch (_) {}
+      return null;
+    }
     try {
       final file = await getCacheFile(gutenbergId);
-      if (await file.exists()) {
+      if (file != null && await file.exists()) {
         final content = await file.readAsString();
         if (content.trim().isNotEmpty) {
+          _memoryCache[gutenbergId] = content;
           return content;
         }
       }
@@ -464,15 +516,35 @@ class GutendexService {
   }
 
   Future<void> saveCachedText(int gutenbergId, String text) async {
+    _memoryCache[gutenbergId] = text;
+    if (kIsWeb) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('gutenberg_cache_$gutenbergId', text);
+      } catch (_) {}
+      return;
+    }
     try {
       final file = await getCacheFile(gutenbergId);
-      await file.writeAsString(text);
+      if (file != null) {
+        await file.writeAsString(text);
+      }
     } catch (e) {
       debugPrint('GutendexService cache write error: $e');
     }
   }
 
   Future<void> clearCache() async {
+    _memoryCache.clear();
+    if (kIsWeb) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        for (final id in featuredGutenbergIds) {
+          await prefs.remove('gutenberg_cache_$id');
+        }
+      } catch (_) {}
+      return;
+    }
     try {
       final directory = await getApplicationDocumentsDirectory();
       final cacheDir = Directory('${directory.path}/gutenberg_cache');
@@ -483,6 +555,9 @@ class GutendexService {
   }
 
   Future<int> getCachedBooksCount() async {
+    if (kIsWeb) {
+      return _memoryCache.length;
+    }
     try {
       final directory = await getApplicationDocumentsDirectory();
       final cacheDir = Directory('${directory.path}/gutenberg_cache');
@@ -492,6 +567,25 @@ class GutendexService {
       }
     } catch (_) {}
     return 0;
+  }
+
+  BookContent? getOfflineFallbackBookContent({
+    required int gutenbergId,
+    required String title,
+    String? author,
+    String? coverUrl,
+  }) {
+    final text = OfflineClassicsData.getTextForId(gutenbergId);
+    if (text != null && text.trim().isNotEmpty) {
+      return GutenbergParser.parseBook(
+        bookId: gutenbergId.toString(),
+        title: title,
+        author: author ?? 'Classic Author',
+        rawText: text,
+        coverUrl: coverUrl,
+      );
+    }
+    return null;
   }
 
   // --- Normalization Helpers ---

@@ -21,14 +21,6 @@ class BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ImageProvider imageProvider = bookCover.startsWith('http')
-        ? CachedNetworkImageProvider(bookCover)
-        : AssetImage(
-            bookCover.isNotEmpty
-                ? bookCover
-                : 'assets/images/girl-book-reading.png',
-          ) as ImageProvider;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: GestureDetector(
@@ -52,18 +44,68 @@ class BookCard extends StatelessWidget {
                         offset: Offset(0, 3),
                       ),
                     ],
-                    image: DecorationImage(
-                      image: imageProvider,
-                      filterQuality: FilterQuality.high,
-                      fit: BoxFit.cover,
-                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: bookCover.startsWith('http')
+                        ? CachedNetworkImage(
+                            imageUrl: bookCover,
+                            fit: BoxFit.cover,
+                            filterQuality: FilterQuality.medium,
+                            placeholder: (context, url) => Container(
+                              color: AppColors.cardPlaceholder,
+                              child: const Center(
+                                child: Icon(Icons.menu_book,
+                                    color: AppColors.textSecondary, size: 36),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: AppColors.cardPlaceholder,
+                              padding: const EdgeInsets.all(8),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.menu_book,
+                                        color: AppColors.primary, size: 36),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      bookTitle,
+                                      maxLines: 2,
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            bookCover.isNotEmpty
+                                ? bookCover
+                                : 'assets/images/girl-book-reading.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: AppColors.cardPlaceholder,
+                              child: const Center(
+                                child: Icon(Icons.menu_book,
+                                    color: AppColors.textSecondary, size: 36),
+                              ),
+                            ),
+                          ),
                   ),
                 ),
                 Positioned(
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.black.withAlpha(160),
                       borderRadius: BorderRadius.circular(8),
@@ -90,7 +132,7 @@ class BookCard extends StatelessWidget {
             const SizedBox(height: 10),
             // Book title
             SizedBox(
-              width: 150, // Adjust width to prevent overflow
+              width: 150,
               child: Text(
                 bookTitle,
                 style: const TextStyle(
@@ -98,22 +140,22 @@ class BookCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
-                maxLines: 1, // Ensure only 1 line is displayed
-                overflow: TextOverflow.ellipsis, // Add ellipsis for long text
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(height: 4),
             // Author name
             SizedBox(
-              width: 150, // Adjust width to prevent overflow
+              width: 150,
               child: Text(
                 author,
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
-                maxLines: 1, // Ensure only 1 line is displayed
-                overflow: TextOverflow.ellipsis, // Add ellipsis for long text
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

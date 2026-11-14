@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:inkflow/constants.dart'; // Assuming you have constants defined here
@@ -51,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _initializeNotifications() async {
+    if (kIsWeb) return;
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -74,6 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _requestNotificationPermission() async {
+    if (kIsWeb) return;
     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
         flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
@@ -91,6 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _checkExactAlarmPermission() async {
+    if (kIsWeb) return;
     if (Platform.isAndroid) {
       final deviceInfo = DeviceInfoPlugin();
       final androidInfo = await deviceInfo.androidInfo;
